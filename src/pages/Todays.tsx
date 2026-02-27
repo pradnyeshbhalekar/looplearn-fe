@@ -8,12 +8,14 @@ export const Todays = () => {
   const [error, setError] = useState(null);
   const diagramRef = useRef(null);
 
+  const BACKEND_URI = import.meta.env.VITE_BACKEND_URI;
+
   // Fetch Article Data
   useEffect(() => {
     const fetchTodayArticle = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch("http://127.0.0.1:5000/api/articles/today", {
+        const response = await fetch(`${BACKEND_URI}/api/articles/today`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
