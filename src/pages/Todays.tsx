@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import mermaid from "mermaid";
+import Navbar from "../components/layout/Navbar";
+import Footer from "../components/layout/Footer";
+import { useTheme } from "../context/ThemeContext";
 
 export const Todays = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { theme } = useTheme();
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -45,7 +48,7 @@ export const Todays = () => {
 
     mermaid.initialize({
       startOnLoad: false,
-      theme: isDarkMode ? "dark" : "default",
+      theme: theme === "dark" ? "dark" : "default",
       fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial",
     });
 
@@ -54,7 +57,7 @@ export const Todays = () => {
       diagramRef.current.innerHTML = article.diagram;
       mermaid.run({ nodes: [diagramRef.current] }).catch((err) => console.error(err));
     }
-  }, [isDarkMode, article?.diagram]);
+  }, [theme, article?.diagram]);
 
   // Editorial Markdown Parser
   const renderContent = (content) => {
@@ -115,32 +118,10 @@ export const Todays = () => {
   };
 
   return (
-    <div className={`${isDarkMode ? "dark" : ""} transition-colors duration-200`}>
+    <div className={`${theme === "dark" ? "dark" : ""} transition-colors duration-200`}>
       <div className="min-h-screen bg-white dark:bg-[#0A0A0A] font-sans selection:bg-blue-200 selection:text-blue-900 dark:selection:bg-blue-900 dark:selection:text-blue-100">
-        
-        {/* Top Navigation Bar */}
-        <nav className="sticky top-0 z-50 w-full backdrop-blur-md bg-white/80 dark:bg-[#0A0A0A]/80 border-b border-slate-200 dark:border-slate-800 transition-colors">
-          <div className="max-w-screen-xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div className="font-bold text-xl tracking-tighter text-slate-900 dark:text-white">
-              TechDaily.
-            </div>
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
-              aria-label="Toggle Theme"
-            >
-              {isDarkMode ? (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-              )}
-            </button>
-          </div>
-        </nav>
+
+        <Navbar />
 
         {/* Main Article Container */}
         <main className="max-w-2xl mx-auto px-6 py-16 sm:py-24">
@@ -241,6 +222,9 @@ export const Todays = () => {
           )}
 
         </main>
+
+        <Footer />
+
       </div>
     </div>
   );
