@@ -8,7 +8,7 @@ export const Todays = () => {
   const [error, setError] = useState(null);
   const diagramRef = useRef(null);
 
-  const BACKEND_URI = import.meta.env.VITE_BACKEND_URI;
+  const BACKEND_URI = import.meta.env.VITE_API_BASE_URL;
 
   // Fetch Article Data
   useEffect(() => {
