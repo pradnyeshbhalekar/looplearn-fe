@@ -1,106 +1,104 @@
-import { Link, useNavigate } from "react-router-dom"
-import Logo from "../Logo"
-import { useTheme } from "../../context/ThemeContext"
-import { useAppDispatch, useAppSelector } from "../../app/hook"
-import { logout } from "../../features/auth/authSlice"
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import Logo from "../Logo";
+import { useTheme } from "../../context/ThemeContext";
+import { useAppDispatch, useAppSelector } from "../../app/hook";
+import { logout } from "../../features/auth/authSlice";
+import { Sun, Moon, LogOut, LayoutDashboard, Fingerprint } from "lucide-react";
 
 const Navbar = () => {
-  const { theme, toggleTheme } = useTheme()
-  const navigate = useNavigate()
-  const dispatch = useAppDispatch()
-  const { isAuthenticated } = useAppSelector((s) => s.auth)
+  const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const dispatch = useAppDispatch();
+  const { isAuthenticated } = useAppSelector((s) => s.auth);
 
   const handleLogout = () => {
-    dispatch(logout())
-    navigate("/login")
-  }
+    dispatch(logout());
+    navigate("/login");
+  };
+
+  // Check if we are on the Briefing (Todays) page
+  const isBriefingPage = location.pathname === "/todays";
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-white/80 dark:bg-[#050505]/80 border-b border-gray-200 dark:border-gray-800">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Logo className="text-xl" />
+    <nav className="fixed top-0 left-0 right-0 z-[100] px-6 py-4">
+      <div className="max-w-7xl mx-auto flex items-center justify-between h-14 px-6 rounded-full border border-gray-200/50 dark:border-white/10 bg-white/70 dark:bg-black/70 backdrop-blur-xl shadow-sm">
+        
+        {/* LEFT: Brand/Logo */}
+        <div className="flex items-center gap-8">
+          <Link to="/" className="no-underline group">
+            <Logo className="text-lg font-black tracking-tighter transition-transform group-hover:scale-105" />
+          </Link>
 
-        {/* Center navigation */}
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600 dark:text-gray-300">
-          <a href="#why" className="hover:text-primary no-underline">
-            Why
-          </a>
-          <a href="#who" className="hover:text-primary no-underline">
-            Who
-          </a>
-          <a href="#how" className="hover:text-primary no-underline">
-            How
-          </a>
+          {/* Marketing Links - Hidden on Briefing Page */}
+          {!isBriefingPage && (
+            <div className="hidden md:flex items-center gap-6">
+              {["Why", "Who", "How"].map((item) => (
+                <a
+                  key={item}
+                  href={`#${item.toLowerCase()}`}
+                  className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-blue-600 transition-colors no-underline"
+                >
+                  {item}
+                </a>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Right actions */}
-        <div className="flex items-center gap-6">
-          {/* Theme toggle */}
+        {/* RIGHT: Actions */}
+        <div className="flex items-center gap-2 sm:gap-4">
+          
+          {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="relative w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border-0 cursor-pointer"
+            className="w-9 h-9 flex items-center justify-center rounded-full text-gray-500 hover:text-black dark:hover:text-white transition-colors"
             aria-label="Toggle theme"
           >
-            {/* Sun */}
-            <svg
-              className={`w-5 h-5 absolute transition-all duration-500 ${
-                theme === "dark"
-                  ? "opacity-0 rotate-90 scale-0"
-                  : "opacity-100 rotate-0 scale-100"
-              }`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <circle cx="12" cy="12" r="5" />
-              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-            </svg>
-
-            {/* Moon */}
-            <svg
-              className={`w-5 h-5 absolute transition-all duration-500 ${
-                theme === "dark"
-                  ? "opacity-100 rotate-0 scale-100"
-                  : "opacity-0 -rotate-90 scale-0"
-              }`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-            </svg>
+            {theme === "dark" ? <Sun size={18} strokeWidth={2.5} /> : <Moon size={18} strokeWidth={2.5} />}
           </button>
 
-          {/* Auth action */}
+          <div className="h-4 w-px bg-gray-200 dark:bg-white/10 mx-2" />
+
           {!isAuthenticated ? (
             <Link
               to="/login"
-              className="px-5 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-blue-700 no-underline"
+              className="flex items-center gap-2 px-5 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full bg-black dark:bg-white text-white dark:text-black hover:opacity-80 transition-all no-underline"
             >
-              Login
+              <Fingerprint size={14} />
+              Access
             </Link>
           ) : (
-            <div className="flex items-center gap-4">
-              <Link
-                to="/todays"
-                className="text-sm font-medium text-secondary dark:text-white hover:text-primary no-underline"
-              >
-                Dashboard
-              </Link>
+            <div className="flex items-center gap-2 sm:gap-4">
+              
+              {/* Only show "Briefing" button if NOT on the briefing page */}
+              {!isBriefingPage && (
+                <Link
+                  to="/todays"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-black dark:hover:text-white transition-all no-underline"
+                >
+                  <LayoutDashboard size={14} />
+                  <span className="hidden sm:inline">Briefing</span>
+                </Link>
+              )}
+
+              {/* Logout Button */}
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="p-2 text-gray-400 hover:text-red-500 transition-colors group relative"
+                title="Logout"
               >
-                Logout
+                <LogOut size={18} strokeWidth={2.5} />
+                <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 scale-0 group-hover:scale-100 transition-all bg-black dark:bg-white text-white dark:text-black text-[10px] font-black uppercase tracking-tighter px-2 py-1 rounded pointer-events-none">
+                  Exit
+                </span>
               </button>
             </div>
           )}
         </div>
       </div>
     </nav>
-  )
-}
+  );
+};
 
-export default Navbar
+export default Navbar;
