@@ -1,22 +1,17 @@
 import { Link, useNavigate } from "react-router-dom"
-import { useEffect, useState } from "react"
 import Logo from "../Logo"
 import { useTheme } from "../../context/ThemeContext"
+import { useAppDispatch, useAppSelector } from "../../app/hook"
+import { logout } from "../../features/auth/authSlice"
 
 const Navbar = () => {
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
-
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-
-  useEffect(() => {
-    const token = localStorage.getItem("token")
-    setIsAuthenticated(!!token)
-  }, [])
+  const dispatch = useAppDispatch()
+  const { isAuthenticated } = useAppSelector((s) => s.auth)
 
   const handleLogout = () => {
-    localStorage.removeItem("token")
-    setIsAuthenticated(false)
+    dispatch(logout())
     navigate("/login")
   }
 

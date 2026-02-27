@@ -7,7 +7,14 @@ import { useTheme } from "../context/ThemeContext"
 
 declare global {
   interface Window {
-    google: any
+    google: {
+      accounts: {
+        id: {
+          initialize: (config: { client_id: string; callback: (response: { credential: string }) => void }) => void
+          renderButton: (element: HTMLElement | null, options: { theme: string; size: string; width: number }) => void
+        }
+      }
+    }
   }
 }
 
@@ -31,7 +38,7 @@ const Login = () => {
       if (window.google?.accounts?.id) {
         window.google.accounts.id.initialize({
           client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-          callback: (response: any) => {
+          callback: (response: { credential: string }) => {
             dispatch(googleLogin(response.credential))
           },
         })

@@ -2,12 +2,14 @@ import { createSlice } from "@reduxjs/toolkit"
 import type { AuthState } from "./auth.types"
 import { googleLogin } from "./authThunks"
 
+const token = localStorage.getItem("token")
+
 const initialState: AuthState = {
   user: null,
-  token: localStorage.getItem("token"),
+  token: token,
   loading: false,
   error: null,
-  isAuthenticated: false
+  isAuthenticated: !!token
 }
 
 const authSlice = createSlice({
