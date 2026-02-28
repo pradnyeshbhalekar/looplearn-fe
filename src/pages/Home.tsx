@@ -54,10 +54,6 @@ const Home = () => {
           transition={{ duration: 0.8 }}
           className="max-w-5xl mx-auto text-center"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/5 mb-8">
-            <Zap size={14} className="text-blue-600" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">The Daily Learning Protocol</span>
-          </div>
 
           <h1 className="text-6xl md:text-8xl font-black leading-[0.9] tracking-[-0.05em] text-black dark:text-white mb-10">
             One topic a day. <br />

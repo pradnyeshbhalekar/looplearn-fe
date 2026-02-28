@@ -7,6 +7,8 @@ import Dashboard from "../pages/Dashboard"
 import AuthGuard from "../features/auth/AuthGuard"
 import LoginGuard from "../features/auth/LoginGuard"
 import { Todays } from "../pages/Todays"
+import {Admin} from '../pages/Admin'
+import AdminRoute from '../features/auth/AdminRoute'
 
 export const router = createBrowserRouter([
   { path: "/", element: <Home /> },
@@ -34,5 +36,13 @@ export const router = createBrowserRouter([
         <Todays/>
       </AuthGuard>
     )
-  }
+  },
+  { path: "/admin", element: (
+    <AuthGuard>
+      <AdminRoute>
+        <Admin />
+      </AdminRoute>
+    </AuthGuard>
+  )
+}
 ])

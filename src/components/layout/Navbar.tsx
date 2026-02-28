@@ -26,9 +26,8 @@ const Navbar = () => {
         
         {/* LEFT: Brand/Logo */}
         <div className="flex items-center gap-8">
-          <Link to="/" className="no-underline group">
-            <Logo className="text-lg font-black tracking-tighter transition-transform group-hover:scale-105" />
-          </Link>
+          {/* Logo is already a Link, don't wrap it */}
+          <Logo className="text-lg font-black tracking-tighter transition-transform hover:scale-105" />
 
           {/* Marketing Links - Hidden on Briefing Page */}
           {!isBriefingPage && (
