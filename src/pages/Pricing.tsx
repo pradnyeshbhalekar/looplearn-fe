@@ -58,8 +58,7 @@ const Pricing = () => {
             setProcessingPlanId(planId);
             const response = await dispatch(createSubscription(planId)).unwrap();
             if (response && response.razorpay && response.razorpay.short_url) {
-                const rpWin = window.open(response.razorpay.short_url, "_blank");
-                (window as any).__razorpayWin = rpWin;
+                window.open(response.razorpay.short_url, "_blank", "noopener,noreferrer");
                 navigate("/subscription/success");
             } else {
                 console.error("No short_url returned", response);
@@ -98,7 +97,7 @@ const Pricing = () => {
                     </div>
                 ) : (
                     <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto w-full">
-                        {plans.map((plan, index) => (
+                        {(Array.isArray(plans) ? plans : []).map((plan, index) => (
                             <motion.div
                                 key={plan.id}
                                 initial={{ opacity: 0, y: 30 }}
@@ -128,7 +127,7 @@ const Pricing = () => {
 
                                     <div className="flex-grow">
                                         <ul className="space-y-4 mb-8">
-                                            {plan.features.length > 0 ? (
+                                            {Array.isArray(plan.features) && plan.features.length > 0 ? (
                                                 plan.features.map((feature, i) => (
                                                     <li key={i} className="flex items-start gap-3 text-gray-600 dark:text-gray-300">
                                                         <Check className="w-5 h-5 text-blue-600 dark:text-blue-500 shrink-0 mt-0.5" />

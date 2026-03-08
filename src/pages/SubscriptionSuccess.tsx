@@ -26,13 +26,6 @@ const SubscriptionSuccess = () => {
                 if (data.status === "active") {
                     setStatus("success");
                     if (intervalRef.current) clearInterval(intervalRef.current);
-                    const rpWin = (window as any).__razorpayWin as Window | null | undefined;
-                    if (rpWin && !rpWin.closed) {
-                        try {
-                            rpWin.close();
-                        } catch {}
-                        (window as any).__razorpayWin = null;
-                    }
                 } else if (pollCount.current >= MAX_POLLS) {
                     setStatus("timeout");
                     if (intervalRef.current) clearInterval(intervalRef.current);
