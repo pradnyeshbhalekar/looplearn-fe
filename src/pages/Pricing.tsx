@@ -30,7 +30,7 @@ const Pricing = () => {
             if (!isAuthenticated) return;
             try {
                 const subs = await subscriptionApi.listMySubscriptions();
-                setMySubscriptions(subs);
+                setMySubscriptions(Array.isArray(subs) ? subs : []);
             } catch {
                 setMySubscriptions([]);
             }
@@ -39,10 +39,12 @@ const Pricing = () => {
     }, [isAuthenticated]);
 
     const domainsWithActive = useMemo(() => {
+        const list = Array.isArray(mySubscriptions) ? mySubscriptions : [];
         return new Set(
-            mySubscriptions
-                .filter(s => s.status === "active")
-                .map(s => s.domain)
+            list
+                .filter((s) => s && s.status === "active")
+                .map((s) => s.domain)
+                .filter((d) => typeof d === "string" && d.length > 0)
         );
     }, [mySubscriptions]);
 
