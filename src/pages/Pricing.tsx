@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,6 +7,7 @@ import type { AppDispatch, RootState } from "../app/store";
 import { fetchPlans, createSubscription, clearSubscriptionState } from "../features/subscriptions/subscriptionSlice";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
+import { subscriptionApi, type UserSubscription } from "../api/subscription";
 
 const Pricing = () => {
     const navigate = useNavigate();
@@ -18,10 +19,32 @@ const Pricing = () => {
 
     const token = localStorage.getItem("token");
     const isAuthenticated = !!token;
+    const [mySubscriptions, setMySubscriptions] = useState<UserSubscription[]>([]);
 
     useEffect(() => {
         dispatch(fetchPlans());
     }, [dispatch]);
+
+    useEffect(() => {
+        const loadSubs = async () => {
+            if (!isAuthenticated) return;
+            try {
+                const subs = await subscriptionApi.listMySubscriptions();
+                setMySubscriptions(subs);
+            } catch {
+                setMySubscriptions([]);
+            }
+        };
+        loadSubs();
+    }, [isAuthenticated]);
+
+    const domainsWithActive = useMemo(() => {
+        return new Set(
+            mySubscriptions
+                .filter(s => s.status === "active")
+                .map(s => s.domain)
+        );
+    }, [mySubscriptions]);
 
     const handleSubscribe = async (planId: string) => {
         if (!isAuthenticated) {
@@ -33,7 +56,8 @@ const Pricing = () => {
             setProcessingPlanId(planId);
             const response = await dispatch(createSubscription(planId)).unwrap();
             if (response && response.razorpay && response.razorpay.short_url) {
-                window.open(response.razorpay.short_url, "_blank", "noopener,noreferrer");
+                const rpWin = window.open(response.razorpay.short_url, "_blank");
+                (window as any).__razorpayWin = rpWin;
                 navigate("/subscription/success");
             } else {
                 console.error("No short_url returned", response);
@@ -93,6 +117,11 @@ const Pricing = () => {
                                             <span className="text-5xl font-black tracking-tighter text-black dark:text-white">₹{plan.monthly_price}</span>
                                             <span className="text-gray-500 font-medium">/{plan.billing_cycle || "month"}</span>
                                         </div>
+                                        {domainsWithActive.has(plan.domain) && (
+                                            <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400">
+                                                Subscribed
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="flex-grow">
@@ -125,7 +154,7 @@ const Pricing = () => {
 
                                     <button
                                         onClick={() => handleSubscribe(plan.id)}
-                                        disabled={subscribing}
+                                        disabled={subscribing || domainsWithActive.has(plan.domain)}
                                         className="w-full py-4 mt-auto bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-black rounded-xl font-bold transition-colors flex items-center justify-center gap-2 group/btn disabled:opacity-70 disabled:cursor-not-allowed"
                                     >
                                         {subscribing && processingPlanId === plan.id ? (
@@ -134,7 +163,11 @@ const Pricing = () => {
                                             </>
                                         ) : (
                                             <>
-                                                {isAuthenticated ? "Subscribe Now" : "Login to Subscribe"}
+                                                {domainsWithActive.has(plan.domain)
+                                                    ? "Already Subscribed"
+                                                    : isAuthenticated
+                                                    ? "Subscribe Now"
+                                                    : "Login to Subscribe"}
                                                 <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                                             </>
                                         )}

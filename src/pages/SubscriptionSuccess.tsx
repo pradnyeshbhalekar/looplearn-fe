@@ -26,10 +26,13 @@ const SubscriptionSuccess = () => {
                 if (data.status === "active") {
                     setStatus("success");
                     if (intervalRef.current) clearInterval(intervalRef.current);
-                    // Add slight delay before redirect for user to see success
-                    setTimeout(() => {
-                        navigate("/dashboard");
-                    }, 2000);
+                    const rpWin = (window as any).__razorpayWin as Window | null | undefined;
+                    if (rpWin && !rpWin.closed) {
+                        try {
+                            rpWin.close();
+                        } catch {}
+                        (window as any).__razorpayWin = null;
+                    }
                 } else if (pollCount.current >= MAX_POLLS) {
                     setStatus("timeout");
                     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -106,14 +109,14 @@ const SubscriptionSuccess = () => {
                             </h1>
 
                             <p className="text-gray-500 dark:text-gray-400 text-lg md:text-xl font-medium leading-relaxed mb-12">
-                                You are now subscribed to LoopLearn. Redirecting you to your dashboard...
+                                You are now subscribed to LoopLearn. You can continue when ready.
                             </p>
 
                             <Link
                                 to="/dashboard"
                                 className="inline-flex items-center gap-3 px-10 py-5 bg-black dark:bg-white text-white dark:text-black rounded-full font-black text-sm uppercase tracking-widest hover:scale-105 transition-all shadow-xl group no-underline"
                             >
-                                Go to Dashboard manually
+                                Go to Dashboard
                                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                             </Link>
                         </motion.div>

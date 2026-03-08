@@ -20,6 +20,26 @@ export interface SubscriptionResponse {
     };
 }
 
+export interface UserSubscription {
+    subscription_id: string;
+    status: string;
+    plan_id: string;
+    plan_name: string;
+    domain: string;
+    ends_at: string | null;
+    razorpay_id?: string;
+}
+
+export interface Article {
+    id: string;
+    title: string;
+    slug: string;
+    content: string;
+    diagram?: string;
+    domain?: string;
+    published_at?: string;
+}
+
 export const subscriptionApi = {
     fetchPlans: async (): Promise<Plan[]> => {
         const response = await api.get("/api/subscriptions/plans");
@@ -38,6 +58,21 @@ export const subscriptionApi = {
     
     confirmSubscription: async (): Promise<{ status: string; message?: string }> => {
         const response = await api.post("/api/subscriptions/confirm");
+        return response.data;
+    },
+    
+    listMySubscriptions: async (): Promise<UserSubscription[]> => {
+        const response = await api.get("/api/subscriptions/me/list");
+        return response.data;
+    },
+    
+    getTodayArticleByDomain: async (domain: string): Promise<Article> => {
+        const response = await api.get(`/api/subscriptions/me/today`, { params: { domain } });
+        return response.data;
+    },
+    
+    getArticleBySlug: async (slug: string): Promise<Article & { subscription?: UserSubscription }> => {
+        const response = await api.get(`/api/subscriptions/me/article/${slug}`);
         return response.data;
     },
 };

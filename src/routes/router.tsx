@@ -11,6 +11,7 @@ import { Admin } from '../pages/Admin'
 import AdminRoute from '../features/auth/AdminRoute'
 import Pricing from "../pages/Pricing"
 import SubscriptionSuccess from "../pages/SubscriptionSuccess"
+import SubscribedArticle from "../pages/SubscribedArticle"
 
 export const router = createBrowserRouter([
   { path: "/", element: <Home /> },
@@ -38,6 +39,14 @@ export const router = createBrowserRouter([
     element: (
       <AuthGuard>
         <Todays />
+      </AuthGuard>
+    )
+  },
+  {
+    path: "/subscriptions/article/:slug",
+    element: (
+      <AuthGuard>
+        <SubscribedArticle />
       </AuthGuard>
     )
   },
