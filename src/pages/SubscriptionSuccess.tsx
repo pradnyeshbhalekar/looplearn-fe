@@ -11,10 +11,9 @@ const SubscriptionSuccess = () => {
     const [status, setStatus] = useState<"polling" | "success" | "timeout" | "error">("polling");
     const pollCount = useRef(0);
     const MAX_POLLS = 20; // e.g. 60 seconds of polling roughly if 3s interval
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     useEffect(() => {
-        let intervalId: ReturnType<typeof setInterval>;
-
         const checkStatus = async () => {
             try {
                 pollCount.current += 1;
@@ -22,21 +21,21 @@ const SubscriptionSuccess = () => {
 
                 if (data.status === "active") {
                     setStatus("success");
-                    clearInterval(intervalId);
+                    if (intervalRef.current) clearInterval(intervalRef.current);
                     // Add slight delay before redirect for user to see success
                     setTimeout(() => {
                         navigate("/dashboard");
                     }, 2000);
                 } else if (pollCount.current >= MAX_POLLS) {
                     setStatus("timeout");
-                    clearInterval(intervalId);
+                    if (intervalRef.current) clearInterval(intervalRef.current);
                 }
             } catch (err) {
                 console.error("Failed to fetch subscription status:", err);
                 // We keep polling in case it's a transient network error, until max polls
                 if (pollCount.current >= MAX_POLLS) {
                     setStatus("error");
-                    clearInterval(intervalId);
+                    if (intervalRef.current) clearInterval(intervalRef.current);
                 }
             }
         };
@@ -45,10 +44,10 @@ const SubscriptionSuccess = () => {
         checkStatus();
 
         // Start interval
-        intervalId = setInterval(checkStatus, 3000);
+        intervalRef.current = setInterval(checkStatus, 3000);
 
         return () => {
-            if (intervalId) clearInterval(intervalId);
+            if (intervalRef.current) clearInterval(intervalRef.current);
         };
     }, [navigate]);
 
@@ -74,7 +73,7 @@ const SubscriptionSuccess = () => {
                             </div>
 
                             <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-6">
-                                Activating <span className="text-blue-600 dark:text-blue-500">Subscription...</span>
+                                Activating <span className="text-blue-600 dark:text-blue-500">your subscription…</span>
                             </h1>
 
                             <p className="text-gray-500 dark:text-gray-400 text-lg md:text-xl font-medium leading-relaxed mb-12">

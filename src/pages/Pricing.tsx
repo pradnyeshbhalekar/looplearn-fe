@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Loader2, ArrowRight, AlertTriangle, X } from "lucide-react";
@@ -8,6 +9,7 @@ import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 
 const Pricing = () => {
+    const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
     const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
     const { plans, loadingPlans, subscribing, subscribeError } = useSelector(
@@ -31,7 +33,8 @@ const Pricing = () => {
             setProcessingPlanId(planId);
             const response = await dispatch(createSubscription(planId)).unwrap();
             if (response && response.razorpay && response.razorpay.short_url) {
-                window.location.href = response.razorpay.short_url;
+                window.open(response.razorpay.short_url, "_blank", "noopener,noreferrer");
+                navigate("/subscription/success");
             } else {
                 console.error("No short_url returned", response);
             }
