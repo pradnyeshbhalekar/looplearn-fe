@@ -59,7 +59,12 @@ const Pricing = () => {
             const response = await dispatch(createSubscription(planId)).unwrap();
             if (response && response.razorpay && response.razorpay.short_url) {
                 window.open(response.razorpay.short_url, "_blank", "noopener,noreferrer");
-                navigate("/subscription/success");
+                const sid = response.razorpay.subscription_id || response.subscription_id;
+                if (sid) {
+                    navigate(`/subscription/success?sid=${encodeURIComponent(sid)}`);
+                } else {
+                    navigate("/subscription/success");
+                }
             } else {
                 console.error("No short_url returned", response);
             }

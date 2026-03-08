@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, ArrowRight, Loader2, AlertCircle } from "lucide-react";
@@ -8,25 +8,41 @@ import Footer from "../components/layout/Footer";
 
 const SubscriptionSuccess = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [status, setStatus] = useState<"polling" | "success" | "timeout" | "error">("polling");
     const pollCount = useRef(0);
     const MAX_POLLS = 20; // e.g. 60 seconds of polling roughly if 3s interval
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    useEffect(() => {
-        subscriptionApi.confirmSubscription().catch(() => {});
-    }, []);
+    // Do not call confirm here; success must be driven only by webhook-updated status
 
     useEffect(() => {
         const checkStatus = async () => {
             try {
                 pollCount.current += 1;
-                const data = await subscriptionApi.getSubscriptionStatus();
+                const sid = searchParams.get("sid");
+                if (sid) {
+                    const list = await subscriptionApi.listMySubscriptions();
+                    const match = (Array.isArray(list) ? list : []).find(
+                        (s) =>
+                            (s.razorpay_id === sid || s.subscription_id === sid) &&
+                            s.status === "active"
+                    );
+                    if (match) {
+                        setStatus("success");
+                        if (intervalRef.current) clearInterval(intervalRef.current);
+                        return;
+                    }
+                } else {
+                    const data = await subscriptionApi.getSubscriptionStatus();
+                    if (data.status === "active") {
+                        setStatus("success");
+                        if (intervalRef.current) clearInterval(intervalRef.current);
+                        return;
+                    }
+                }
 
-                if (data.status === "active") {
-                    setStatus("success");
-                    if (intervalRef.current) clearInterval(intervalRef.current);
-                } else if (pollCount.current >= MAX_POLLS) {
+                if (pollCount.current >= MAX_POLLS) {
                     setStatus("timeout");
                     if (intervalRef.current) clearInterval(intervalRef.current);
                 }
@@ -49,7 +65,7 @@ const SubscriptionSuccess = () => {
         return () => {
             if (intervalRef.current) clearInterval(intervalRef.current);
         };
-    }, [navigate]);
+    }, [navigate, searchParams]);
 
     return (
         <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] text-black dark:text-white flex flex-col font-sans transition-colors duration-300">
