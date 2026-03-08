@@ -1,17 +1,15 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { Play, Activity, Layers, Search, Check, X, Clock, Terminal } from "lucide-react";
+import { Layers, Search, Check, X, Clock } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
-import type { Candidate, PipelineStatus } from "../types/admin";
+import type { Candidate } from "../types/admin";
 
 const BACKEND_URI = import.meta.env.VITE_API_BASE_URL;
 
 export const Admin: React.FC = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [pipelineJob, setPipelineJob] = useState<PipelineStatus | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<Candidate | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const [isRejecting, setIsRejecting] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
@@ -121,7 +119,7 @@ export const Admin: React.FC = () => {
                 >
                   <h3 className="font-bold">{c.title}</h3>
                   <p className="text-xs text-gray-400 mt-2">
-                    <Clock size={10} className="inline mr-1"/>
+                    <Clock size={10} className="inline mr-1" />
                     {new Date(c.created_at).toLocaleDateString()}
                   </p>
                 </button>
@@ -140,14 +138,14 @@ export const Admin: React.FC = () => {
                     onClick={() => setIsApproving(true)}
                     className="bg-green-600 text-white px-6 py-2 rounded-full text-xs font-bold flex items-center gap-2"
                   >
-                    <Check size={14}/> Approve
+                    <Check size={14} /> Approve
                   </button>
 
                   <button
                     onClick={() => setIsRejecting(true)}
                     className="bg-red-600 text-white px-6 py-2 rounded-full text-xs font-bold flex items-center gap-2"
                   >
-                    <X size={14}/> Reject
+                    <X size={14} /> Reject
                   </button>
                 </div>
 
@@ -157,7 +155,7 @@ export const Admin: React.FC = () => {
 
                   <div className="mt-10">
                     <p className="text-xs font-bold uppercase text-gray-400 mb-2">
-                      <Layers size={12} className="inline mr-2"/> Diagram
+                      <Layers size={12} className="inline mr-2" /> Diagram
                     </p>
                     <pre className="bg-black text-blue-400 p-4 rounded-lg text-xs overflow-x-auto">
                       {selectedArticle.diagram}
@@ -167,7 +165,7 @@ export const Admin: React.FC = () => {
               </div>
             ) : (
               <div className="h-[60vh] border-dashed border-2 flex items-center justify-center text-gray-400 rounded-3xl">
-                <Search className="mr-3"/>
+                <Search className="mr-3" />
                 Select article
               </div>
             )}

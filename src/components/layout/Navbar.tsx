@@ -23,7 +23,7 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-[100] px-6 py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between h-14 px-6 rounded-full border border-gray-200/50 dark:border-white/10 bg-white/70 dark:bg-black/70 backdrop-blur-xl shadow-sm">
-        
+
         {/* LEFT: Brand/Logo */}
         <div className="flex items-center gap-8">
           {/* Logo is already a Link, don't wrap it */}
@@ -41,13 +41,19 @@ const Navbar = () => {
                   {item}
                 </a>
               ))}
+              <Link
+                to="/pricing"
+                className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-blue-600 transition-colors no-underline"
+              >
+                Pricing
+              </Link>
             </div>
           )}
         </div>
 
         {/* RIGHT: Actions */}
         <div className="flex items-center gap-2 sm:gap-4">
-          
+
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
@@ -69,7 +75,7 @@ const Navbar = () => {
             </Link>
           ) : (
             <div className="flex items-center gap-2 sm:gap-4">
-              
+
               {/* Only show "Briefing" button if NOT on the briefing page */}
               {!isBriefingPage && (
                 <Link

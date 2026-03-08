@@ -2,15 +2,14 @@ import { Link } from "react-router-dom";
 import { motion, useScroll, useSpring } from "framer-motion"; // For scroll animations
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
-import { 
-  Zap, 
-  Target, 
-  Infinity, 
-  Code2, 
-  GraduationCap, 
-  Repeat, 
-  ArrowRight, 
-  XCircle, 
+import {
+  Target,
+  Infinity as InfinityIcon,
+  Code2,
+  GraduationCap,
+  Repeat,
+  ArrowRight,
+  XCircle,
   CheckCircle2,
   Terminal,
   Layers
@@ -21,7 +20,7 @@ const fadeInUp = {
   initial: { opacity: 0, y: 30 },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true },
-  transition: { duration: 0.6, ease: "easeOut" }
+  transition: { duration: 0.6, ease: "easeOut" as any }
 };
 
 const Home = () => {
@@ -43,12 +42,12 @@ const Home = () => {
         className="fixed top-0 left-0 right-0 h-1 bg-blue-600 z-[110] origin-left"
         style={{ scaleX }}
       />
-      
+
       <Navbar />
 
       {/* --- HERO SECTION --- */}
       <section className="pt-44 pb-24 px-6 overflow-hidden">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -61,7 +60,7 @@ const Home = () => {
           </h1>
 
           <p className="max-w-2xl mx-auto text-lg md:text-xl text-gray-500 dark:text-gray-400 font-medium leading-relaxed mb-12">
-            LoopLearn delivers a single, high-signal technical briefing every 24 hours. 
+            LoopLearn delivers a single, high-signal technical briefing every 24 hours.
             Built for engineering minds who value depth over volume.
           </p>
 
@@ -97,7 +96,7 @@ const Home = () => {
             <CheckCircle2 size={32} className="text-blue-600" />
             <h2 className="text-3xl font-black tracking-tighter text-black dark:text-white uppercase">The Loop</h2>
             <p className="text-gray-500 dark:text-gray-400 text-lg leading-relaxed font-medium">
-              We provide one structured entry point daily. No backlogs. Just one core concept, one visual blueprint, and one application. 
+              We provide one structured entry point daily. No backlogs. Just one core concept, one visual blueprint, and one application.
             </p>
           </motion.div>
         </div>
@@ -115,10 +114,10 @@ const Home = () => {
             {[
               { icon: <Code2 size={24} />, title: "Developers", desc: "Strengthen your mental model of systems without leaving your flow state." },
               { icon: <GraduationCap size={24} />, title: "Engineers", desc: "Bridge the gap between theory and production with daily briefings." },
-              { icon: <Infinity size={24} />, title: "Architects", desc: "Understand the full stack by spending 5 minutes a day on diverse domains." },
+              { icon: <InfinityIcon size={24} />, title: "Architects", desc: "Understand the full stack by spending 5 minutes a day on diverse domains." },
             ].map((item, i) => (
-              <motion.div 
-                key={i} 
+              <motion.div
+                key={i}
                 {...fadeInUp}
                 transition={{ delay: i * 0.1 }}
                 className="p-8 rounded-3xl border border-gray-100 dark:border-gray-900 bg-white dark:bg-[#0c0c0c] hover:border-blue-500/30 transition-colors"
@@ -148,8 +147,8 @@ const Home = () => {
               { icon: <Layers />, title: "System Blueprint", desc: "Every topic includes a visual architecture diagram to help you map the concept spatially." },
               { icon: <Target />, title: "Case Implementation", desc: "Connect theory to reality with a focused case study on how this concept solves actual problems." },
             ].map((item, i) => (
-              <motion.div 
-                key={i} 
+              <motion.div
+                key={i}
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
@@ -175,7 +174,7 @@ const Home = () => {
       {/* --- CTA --- */}
       <section className="py-40 px-6 text-center">
         <motion.div {...fadeInUp}>
-          <motion.div 
+          <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
             className="inline-block mb-8"
