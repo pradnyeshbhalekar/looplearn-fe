@@ -35,4 +35,9 @@ export const subscriptionApi = {
         const response = await api.get("/api/subscriptions/me");
         return response.data;
     },
+    
+    confirmSubscription: async (): Promise<{ status: string; message?: string }> => {
+        const response = await api.post("/api/subscriptions/confirm");
+        return response.data;
+    },
 };

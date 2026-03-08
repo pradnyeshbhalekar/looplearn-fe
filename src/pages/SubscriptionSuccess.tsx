@@ -14,6 +14,10 @@ const SubscriptionSuccess = () => {
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     useEffect(() => {
+        subscriptionApi.confirmSubscription().catch(() => {});
+    }, []);
+
+    useEffect(() => {
         const checkStatus = async () => {
             try {
                 pollCount.current += 1;
