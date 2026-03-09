@@ -4,8 +4,9 @@ import mermaid from "mermaid";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import { useTheme } from "../context/ThemeContext";
-import { Clock, Calendar, Layout } from "lucide-react";
+import { Clock, Calendar, Layout, Headphones } from "lucide-react";
 import TodaysSkeleton from "../components/skeletons/TodaysSkeleton";
+import AudioPlayer from "../components/AudioPlayer";
 
 /* ---------------- TYPES ---------------- */
 
@@ -245,18 +246,16 @@ export const Todays: React.FC = () => {
               {article.audio_url && (
                 <div className="mb-10 w-full bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-6 border border-blue-100 dark:border-blue-800/30 shadow-sm relative overflow-hidden">
                   <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"></div>
-                  <div className="flex items-center gap-3 mb-4 relative z-10">
+                  <div className="flex items-center gap-3 mb-2 relative z-10">
                     <div className="p-2 bg-blue-100 dark:bg-blue-800/50 rounded-lg text-blue-600 dark:text-blue-400">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+                      <Headphones size={20} strokeWidth={2.5} />
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-gray-900 dark:text-white">Commuter Mode</h3>
                       <p className="text-xs text-gray-500 dark:text-gray-400 font-medium tracking-wide">LISTEN ON THE GO</p>
                     </div>
                   </div>
-                  <audio controls className="w-full rounded-lg shadow-sm bg-white dark:bg-gray-800 relative z-10" style={{ height: '40px' }} src={article.audio_url}>
-                    Your browser does not support the audio element.
-                  </audio>
+                  <AudioPlayer src={article.audio_url} />
                 </div>
               )}
 
