@@ -13,13 +13,13 @@ const AuthCallback = () => {
     const token = searchParams.get("token")
     if (token) {
       localStorage.setItem("token", token)
-      navigate("/todays")
+      navigate("/dashboard")
       return
     }
 
     // If already authenticated, go to dashboard
     if (isAuthenticated) {
-      navigate("/todays")
+      navigate("/dashboard")
       return
     }
 

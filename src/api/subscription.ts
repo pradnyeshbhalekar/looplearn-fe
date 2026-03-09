@@ -36,6 +36,7 @@ export interface Article {
     slug: string;
     content: string;
     diagram?: string;
+    audio_url?: string;
     domain?: string;
     published_at?: string;
 }

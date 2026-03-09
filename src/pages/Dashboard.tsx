@@ -56,13 +56,40 @@ const Dashboard = () => {
           </div>
         ) : error ? (
           <div className="text-red-600">{error}</div>
-        ) : subs.length === 0 ? (
-          <div className="text-gray-600 dark:text-gray-400">
-            No active subscriptions yet. Visit Pricing to subscribe.
-          </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-8">
-            {subs.map((s) => (
+          <div className="grid md:grid-cols-2 gap-8 mb-12">
+            {/* Global Daily Briefing Card */}
+            <div
+              onClick={() => navigate("/todays")}
+              className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white border border-blue-500 rounded-3xl p-6 shadow-2xl flex flex-col cursor-pointer transition-all hover:scale-[1.02] hover:shadow-blue-900/50"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <span className="inline-block px-3 py-1 bg-white/20 text-white text-xs font-black uppercase tracking-wider rounded-full backdrop-blur-sm">
+                    Free Tier
+                  </span>
+                  <h3 className="text-3xl font-black mt-3">Today's Briefing</h3>
+                  <div className="mt-2 flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-blue-100">
+                    <Calendar size={14} />
+                    DAILY DROP
+                  </div>
+                </div>
+              </div>
+              <div className="mt-6 flex items-center justify-between font-bold text-white">
+                <span>Read General Briefing</span>
+                <ArrowRight className="w-5 h-5" />
+              </div>
+            </div>
+
+            {/* Subscriptions */}
+            {subs.length === 0 ? (
+              <div className="bg-white dark:bg-[#0c0c0c] border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-center items-center text-center">
+                <p className="text-gray-500 dark:text-gray-400 mb-4 font-medium">No active premium plan subscriptions yet.</p>
+                <button onClick={() => navigate("/pricing")} className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full font-black text-xs uppercase tracking-widest hover:scale-105 transition-all">
+                  View Pricing
+                </button>
+              </div>
+            ) : subs.map((s) => (
               <div
                 key={s.subscription_id}
                 onClick={() => {

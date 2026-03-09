@@ -146,6 +146,7 @@ const Home = () => {
               { icon: <Terminal />, title: "Distilled Explanation", desc: "We strip away the fluff. You get the 'why' and the 'how' in a format that respects your time." },
               { icon: <Layers />, title: "System Blueprint", desc: "Every topic includes a visual architecture diagram to help you map the concept spatially." },
               { icon: <Target />, title: "Case Implementation", desc: "Connect theory to reality with a focused case study on how this concept solves actual problems." },
+              { icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>, title: "Commuter Mode", desc: "Listen on the go. Every briefing is seamlessly converted to high-quality audio for your daily commute." },
             ].map((item, i) => (
               <motion.div
                 key={i}
