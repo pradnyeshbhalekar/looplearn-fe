@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import mermaid from "mermaid";
-import { Layers, Search, Check, X, Clock, Calendar } from "lucide-react";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { Layers, Search, Check, X, Clock, Calendar, ZoomIn, ZoomOut, Maximize } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
 import type { Candidate } from "../types/admin";
 
@@ -245,10 +246,47 @@ export const Admin: React.FC = () => {
                         <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
                           <Layers size={14} /> Mermaid Diagram Source
                         </p>
-                        <div
-                          ref={mermaidRef}
-                          className="bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl flex justify-center overflow-x-auto shadow-inner min-h-[200px]"
-                        />
+                        <TransformWrapper
+                          initialScale={1}
+                          minScale={0.2}
+                          maxScale={5}
+                          centerOnInit={true}
+                        >
+                          {({ zoomIn, zoomOut, resetTransform }) => (
+                            <div className="relative border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-[#111] shadow-inner group cursor-grab active:cursor-grabbing">
+                              {/* Zoom Controls */}
+                              <div className="absolute top-4 right-4 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <button
+                                  onClick={() => zoomIn(0.5)}
+                                  className="p-2.5 bg-white/90 dark:bg-black/90 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 backdrop-blur-md transition-all border border-gray-200 dark:border-gray-700 shadow-sm text-gray-700 dark:text-gray-300 hover:scale-105 active:scale-95"
+                                  title="Zoom In"
+                                >
+                                  <ZoomIn size={16} />
+                                </button>
+                                <button
+                                  onClick={() => zoomOut(0.5)}
+                                  className="p-2.5 bg-white/90 dark:bg-black/90 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 backdrop-blur-md transition-all border border-gray-200 dark:border-gray-700 shadow-sm text-gray-700 dark:text-gray-300 hover:scale-105 active:scale-95"
+                                  title="Zoom Out"
+                                >
+                                  <ZoomOut size={16} />
+                                </button>
+                                <button
+                                  onClick={() => resetTransform()}
+                                  className="p-2.5 bg-white/90 dark:bg-black/90 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 backdrop-blur-md transition-all border border-gray-200 dark:border-gray-700 shadow-sm text-gray-700 dark:text-gray-300 hover:scale-105 active:scale-95"
+                                  title="Reset Zoom"
+                                >
+                                  <Maximize size={16} />
+                                </button>
+                              </div>
+
+                              <TransformComponent wrapperClass="!w-full !h-full" contentClass="w-full flex justify-center min-h-[300px] p-6 sm:p-10">
+                                <div ref={mermaidRef} className="w-full flex justify-center items-center" />
+                              </TransformComponent>
+
+                              <p className="absolute bottom-4 left-4 text-[10px] uppercase font-bold tracking-widest text-gray-400 opacity-50 select-none pointer-events-none">Scroll to zoom • Drag to pan</p>
+                            </div>
+                          )}
+                        </TransformWrapper>
                       </div>
                     )}
                   </div>
