@@ -12,6 +12,8 @@ export interface Candidate {
   diagram: string;
   created_at: string;
   topic_node_id: string;
+  status: string;
+  scheduled_for?: string;
 }
 
 export interface PipelineStatus {

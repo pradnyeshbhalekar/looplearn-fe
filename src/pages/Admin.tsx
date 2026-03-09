@@ -1,15 +1,22 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { Layers, Search, Check, X, Clock } from "lucide-react";
+import mermaid from "mermaid";
+import { Layers, Search, Check, X, Clock, Calendar } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
 import type { Candidate } from "../types/admin";
+
+mermaid.initialize({ startOnLoad: false, theme: 'dark' });
 
 const BACKEND_URI = import.meta.env.VITE_API_BASE_URL;
 
 export const Admin: React.FC = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [queued, setQueued] = useState<Candidate[]>([]);
   const [selectedArticle, setSelectedArticle] = useState<Candidate | null>(null);
+  const [activeTab, setActiveTab] = useState<'pending' | 'queued'>('pending');
+
+  const mermaidRef = useRef<HTMLDivElement>(null);
 
   const [isRejecting, setIsRejecting] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
@@ -27,15 +34,41 @@ export const Admin: React.FC = () => {
         "Authorization": `Bearer ${token}`,
       };
 
-      const res = await fetch(`${BACKEND_URI}/api/admin/candidates/`, { headers });
-      const data = await res.json();
-      setCandidates(Array.isArray(data) ? data : []);
+      const [pendingRes, queuedRes] = await Promise.all([
+        fetch(`${BACKEND_URI}/api/admin/candidates/`, { headers }),
+        fetch(`${BACKEND_URI}/api/admin/candidates/queue`, { headers })
+      ]);
+
+      const pendingData = await pendingRes.json();
+      const queuedData = await queuedRes.json();
+
+      setCandidates(Array.isArray(pendingData) ? pendingData : []);
+      setQueued(Array.isArray(queuedData) ? queuedData : []);
     } catch (err) {
       console.error("Queue fetch error:", err);
     }
   }, [token]);
 
   useEffect(() => { fetchCandidates(); }, [fetchCandidates]);
+
+  // Render Mermaid Diagram
+  useEffect(() => {
+    if (selectedArticle && selectedArticle.diagram && mermaidRef.current) {
+      mermaidRef.current.innerHTML = "";
+      try {
+        mermaid.render(`mermaid-${selectedArticle.id}`, selectedArticle.diagram).then((result) => {
+          if (mermaidRef.current) {
+            mermaidRef.current.innerHTML = result.svg;
+          }
+        });
+      } catch (err) {
+        console.error("Mermaid parsing error:", err);
+        if (mermaidRef.current) {
+          mermaidRef.current.innerHTML = `<p class="text-red-500 text-xs">Failed to render diagram.</p>`;
+        }
+      }
+    }
+  }, [selectedArticle]);
 
   // Handle Approve / Reject
   const handleAction = async (action: 'approve' | 'reject', id: string) => {
@@ -80,8 +113,8 @@ export const Admin: React.FC = () => {
         throw new Error(err.detail || "Request failed");
       }
 
-      // Reset
-      setCandidates(prev => prev.filter(c => c.id !== id));
+      // Reset & Refresh
+      await fetchCandidates();
       setSelectedArticle(null);
       setIsRejecting(false);
       setIsApproving(false);
@@ -93,80 +126,148 @@ export const Admin: React.FC = () => {
     }
   };
 
+  const displayList = activeTab === 'pending' ? candidates : queued;
+
   return (
-    <div className="min-h-screen bg-white dark:bg-[#080808] text-black dark:text-white">
+    <div className="min-h-screen bg-[#fafafa] dark:bg-[#050505] text-black dark:text-white font-sans">
       <Navbar />
 
-      <main className="max-w-[1500px] mx-auto px-6 pt-32 pb-20">
+      <main className="max-w-[1500px] mx-auto px-4 sm:px-6 pt-32 pb-20">
         <header className="mb-10">
-          <h1 className="text-5xl font-black uppercase">Command Center</h1>
+          <h1 className="text-4xl sm:text-5xl font-black uppercase tracking-tight">Command Center</h1>
+          <p className="text-gray-500 mt-2 text-sm max-w-2xl leading-relaxed">
+            Manage your daily article pipeline. Review AI-generated pending content or audit upcoming published drops.
+          </p>
         </header>
 
-        <div className="grid lg:grid-cols-12 gap-10">
+        <div className="grid lg:grid-cols-12 gap-8">
 
-          {/* Queue */}
-          <div className="lg:col-span-4">
-            <div className="bg-white dark:bg-[#0c0c0c] border rounded-2xl overflow-hidden">
-              <div className="p-6 font-bold text-sm uppercase">
-                Review Queue ({candidates.length})
+          {/* Sidebar Queue List */}
+          <div className="lg:col-span-4 flex flex-col h-[75vh]">
+            <div className="bg-white dark:bg-[#0c0c0c] border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden flex flex-col h-full shadow-sm">
+
+              {/* Tabs */}
+              <div className="flex bg-gray-50 dark:bg-black/50 p-2 gap-2 border-b border-gray-200 dark:border-white/10">
+                <button
+                  onClick={() => { setActiveTab('pending'); setSelectedArticle(null); }}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${activeTab === 'pending' ? 'bg-white dark:bg-[#111] shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-black dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'}`}
+                >
+                  <Layers size={14} /> Pending ({candidates.length})
+                </button>
+                <button
+                  onClick={() => { setActiveTab('queued'); setSelectedArticle(null); }}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${activeTab === 'queued' ? 'bg-white dark:bg-[#111] shadow-sm text-green-600 dark:text-green-400' : 'text-gray-500 hover:text-black dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'}`}
+                >
+                  <Calendar size={14} /> Scheduled ({queued.length})
+                </button>
               </div>
 
-              {candidates.map(c => (
-                <button
-                  key={c.id}
-                  onClick={() => setSelectedArticle(c)}
-                  className="w-full p-6 text-left border-t hover:bg-gray-50 dark:hover:bg-white/5"
-                >
-                  <h3 className="font-bold">{c.title}</h3>
-                  <p className="text-xs text-gray-400 mt-2">
-                    <Clock size={10} className="inline mr-1" />
-                    {new Date(c.created_at).toLocaleDateString()}
-                  </p>
-                </button>
-              ))}
+              {/* List */}
+              <div className="overflow-y-auto flex-1 p-2">
+                {displayList.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-gray-400 p-8 text-center gap-3">
+                    <Check size={32} className="opacity-20" />
+                    <p className="text-sm">No items in this queue.</p>
+                  </div>
+                ) : (
+                  displayList.map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => setSelectedArticle(c)}
+                      className={`w-full p-5 mb-2 rounded-2xl text-left border border-transparent transition-all ${selectedArticle?.id === c.id ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                    >
+                      <h3 className={`font-bold text-sm leading-snug mb-2 ${selectedArticle?.id === c.id ? 'text-blue-700 dark:text-blue-300' : ''}`}>{c.title}</h3>
+                      <div className="flex items-center gap-3 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                        <span className="flex items-center">
+                          <Clock size={12} className="mr-1.5" />
+                          {new Date(c.created_at).toLocaleDateString()}
+                        </span>
+                        {c.status === 'approved' && c.scheduled_for && (
+                          <span className="flex items-center text-green-600/70 dark:text-green-400/70">
+                            • {new Date(c.scheduled_for).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Preview */}
-          <div className="lg:col-span-8">
+          {/* Main Preview Area */}
+          <div className="lg:col-span-8 flex flex-col h-[75vh]">
             {selectedArticle ? (
-              <div className="bg-white dark:bg-[#0c0c0c] border rounded-2xl overflow-hidden">
+              <div className="bg-white dark:bg-[#0c0c0c] border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden flex flex-col h-full shadow-sm">
 
-                {/* Actions */}
-                <div className="p-6 border-b flex gap-4">
-                  <button
-                    onClick={() => setIsApproving(true)}
-                    className="bg-green-600 text-white px-6 py-2 rounded-full text-xs font-bold flex items-center gap-2"
-                  >
-                    <Check size={14} /> Approve
-                  </button>
+                {/* Top Action Bar */}
+                <div className="px-8 py-5 border-b border-gray-200 dark:border-white/10 flex items-center justify-between bg-gray-50/50 dark:bg-black/20">
+                  <div className="flex items-center gap-3">
+                    <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full ${selectedArticle.status === 'pending' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'}`}>
+                      {selectedArticle.status}
+                    </span>
+                    {selectedArticle.status === 'approved' && selectedArticle.scheduled_for && (
+                      <span className="text-xs font-bold text-gray-500 flex items-center gap-1.5">
+                        <Calendar size={14} /> Drops on {new Date(selectedArticle.scheduled_for).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
 
-                  <button
-                    onClick={() => setIsRejecting(true)}
-                    className="bg-red-600 text-white px-6 py-2 rounded-full text-xs font-bold flex items-center gap-2"
-                  >
-                    <X size={14} /> Reject
-                  </button>
+                  {selectedArticle.status === 'pending' && (
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setIsApproving(true)}
+                        className="bg-black dark:bg-white text-white dark:text-black px-6 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase flex items-center gap-2 hover:scale-105 transition-transform"
+                      >
+                        <Check size={14} /> Approve
+                      </button>
+                      <button
+                        onClick={() => setIsRejecting(true)}
+                        className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-6 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase flex items-center gap-2 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+                      >
+                        <X size={14} /> Reject
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                <div className="p-8 h-[60vh] overflow-y-auto">
-                  <h1 className="text-3xl font-bold mb-6">{selectedArticle.title}</h1>
-                  <ReactMarkdown>{selectedArticle.article_md}</ReactMarkdown>
+                {/* Article Content */}
+                <div className="flex-1 p-8 sm:p-12 overflow-y-auto custom-scrollbar">
+                  <div className="max-w-3xl mx-auto">
+                    <h1 className="text-3xl sm:text-4xl font-black tracking-tight mb-8 leading-tight">{selectedArticle.title}</h1>
 
-                  <div className="mt-10">
-                    <p className="text-xs font-bold uppercase text-gray-400 mb-2">
-                      <Layers size={12} className="inline mr-2" /> Diagram
-                    </p>
-                    <pre className="bg-black text-blue-400 p-4 rounded-lg text-xs overflow-x-auto">
-                      {selectedArticle.diagram}
-                    </pre>
+                    <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none prose-headings:font-black prose-h2:text-2xl prose-h3:text-xl prose-a:text-blue-500 hover:prose-a:text-blue-600 prose-img:rounded-xl">
+                      <ReactMarkdown>{selectedArticle.article_md}</ReactMarkdown>
+                    </div>
+
+                    {selectedArticle.diagram && (
+                      <div className="mt-16 pt-10 border-t border-gray-100 dark:border-white/5">
+                        <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
+                          <Layers size={14} /> Mermaid Diagram Source
+                        </p>
+                        <div
+                          ref={mermaidRef}
+                          className="bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl flex justify-center overflow-x-auto shadow-inner min-h-[200px]"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="h-[60vh] border-dashed border-2 flex items-center justify-center text-gray-400 rounded-3xl">
-                <Search className="mr-3" />
-                Select article
+              <div className="h-full bg-white dark:bg-[#0c0c0c] border border-gray-200 dark:border-white/10 rounded-3xl flex flex-col items-center justify-center text-gray-400 shadow-sm relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="relative z-10 flex flex-col items-center"
+                >
+                  <div className="w-16 h-16 mb-6 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center">
+                    <Search size={24} className="text-gray-400" />
+                  </div>
+                  <p className="font-bold text-lg text-gray-900 dark:text-gray-100">No Selection</p>
+                  <p className="text-sm mt-2 max-w-[250px] text-center">Select an article from the sidebar queue to review its content and metadata.</p>
+                </motion.div>
               </div>
             )}
           </div>
@@ -176,30 +277,36 @@ export const Admin: React.FC = () => {
       {/* APPROVE MODAL */}
       <AnimatePresence>
         {isApproving && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-md p-6 z-50">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-              className="bg-white dark:bg-[#111] p-10 rounded-2xl w-full max-w-md"
+          <div className="fixed inset-0 flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-md p-6 z-[200]">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ duration: 0.2 }}
+              className="bg-white dark:bg-[#111] p-8 border border-gray-200 dark:border-gray-800 rounded-3xl w-full max-w-md shadow-2xl"
             >
-              <h2 className="text-xl font-bold mb-4">Set Publish Date</h2>
+              <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 flex items-center justify-center mb-6">
+                <Calendar size={20} />
+              </div>
+              <h2 className="text-2xl font-black tracking-tight mb-2">Schedule Release</h2>
+              <p className="text-gray-500 text-sm mb-8 leading-relaxed">Select the date this article should be published and sent to subscribed users.</p>
 
-              <input
-                type="date"
-                value={publishDate}
-                onChange={(e) => setPublishDate(e.target.value)}
-                className="w-full p-3 border rounded-lg mb-6 dark:bg-black"
-              />
+              <div className="mb-8">
+                <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-3 ml-1">Publish Date</label>
+                <input
+                  type="date"
+                  value={publishDate}
+                  onChange={(e) => setPublishDate(e.target.value)}
+                  className="w-full p-4 border border-gray-200 dark:border-gray-800 rounded-2xl dark:bg-black text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                />
+              </div>
 
-              <div className="flex gap-4">
+              <div className="flex gap-3">
                 <button
                   onClick={() => handleAction("approve", selectedArticle!.id)}
-                  className="flex-1 bg-green-600 text-white py-3 rounded-full text-xs font-bold"
+                  className="flex-1 bg-black dark:bg-white text-white dark:text-black py-4 rounded-2xl text-xs font-black tracking-widest uppercase hover:scale-[1.02] transition-transform"
                 >
-                  Confirm Approval
+                  Confirm
                 </button>
-
                 <button
                   onClick={() => setIsApproving(false)}
-                  className="px-6 py-3 border rounded-full text-xs font-bold"
+                  className="flex-1 border border-gray-200 dark:border-gray-800 py-4 rounded-2xl text-xs font-black tracking-widest uppercase hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
                 >
                   Cancel
                 </button>
@@ -212,30 +319,36 @@ export const Admin: React.FC = () => {
       {/* REJECT MODAL */}
       <AnimatePresence>
         {isRejecting && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-md p-6 z-50">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-              className="bg-white dark:bg-[#111] p-10 rounded-2xl w-full max-w-md"
+          <div className="fixed inset-0 flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-md p-6 z-[200]">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ duration: 0.2 }}
+              className="bg-white dark:bg-[#111] p-8 border border-gray-200 dark:border-gray-800 rounded-3xl w-full max-w-md shadow-2xl"
             >
-              <h2 className="text-xl font-bold mb-4">Rejection Reason</h2>
+              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 flex items-center justify-center mb-6">
+                <X size={20} />
+              </div>
+              <h2 className="text-2xl font-black tracking-tight mb-2">Reject Article</h2>
+              <p className="text-gray-500 text-sm mb-8 leading-relaxed">Provide a reason for rejecting this AI-generated candidate. It will be moved out of the queue.</p>
 
-              <textarea
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                className="w-full h-32 p-3 border rounded-lg mb-6 dark:bg-black"
-                placeholder="Reason..."
-              />
+              <div className="mb-8">
+                <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-3 ml-1">Rejection Note</label>
+                <textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  className="w-full h-32 p-4 border border-gray-200 dark:border-gray-800 rounded-2xl dark:bg-black text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all resize-none"
+                  placeholder="Explain what went wrong..."
+                />
+              </div>
 
-              <div className="flex gap-4">
+              <div className="flex gap-3">
                 <button
                   onClick={() => handleAction("reject", selectedArticle!.id)}
-                  className="flex-1 bg-red-600 text-white py-3 rounded-full text-xs font-bold"
+                  className="flex-1 bg-red-600 text-white py-4 rounded-2xl text-xs font-black tracking-widest uppercase hover:scale-[1.02] transition-transform"
                 >
-                  Confirm Rejection
+                  Reject Item
                 </button>
-
                 <button
                   onClick={() => setIsRejecting(false)}
-                  className="px-6 py-3 border rounded-full text-xs font-bold"
+                  className="flex-1 border border-gray-200 dark:border-gray-800 py-4 rounded-2xl text-xs font-black tracking-widest uppercase hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
                 >
                   Cancel
                 </button>
