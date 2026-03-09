@@ -76,13 +76,21 @@ const Navbar = () => {
           ) : (
             <div className="flex items-center gap-2 sm:gap-4">
 
+              {/* Dashboard Link - Takes User to Subscriptions List */}
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-black dark:hover:text-white transition-all no-underline"
+              >
+                <LayoutDashboard size={14} />
+                <span className="hidden sm:inline">Dashboard</span>
+              </Link>
+
               {/* Only show "Briefing" button if NOT on the briefing page */}
               {!isBriefingPage && (
                 <Link
                   to="/todays"
                   className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-black dark:hover:text-white transition-all no-underline"
                 >
-                  <LayoutDashboard size={14} />
                   <span className="hidden sm:inline">Briefing</span>
                 </Link>
               )}

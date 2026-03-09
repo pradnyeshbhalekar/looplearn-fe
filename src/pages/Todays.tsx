@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import mermaid from "mermaid";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
@@ -48,12 +49,20 @@ export const Todays: React.FC = () => {
 
   /* ---------------- FETCH TODAY ARTICLE ---------------- */
 
+  const [searchParams] = useSearchParams();
+  const domain = searchParams.get("domain");
+
   useEffect(() => {
     const fetchTodayArticle = async () => {
       try {
         const token = localStorage.getItem("token");
 
-        const response = await fetch(`${BACKEND_URI}/api/articles/today`, {
+        let url = `${BACKEND_URI}/api/articles/today`;
+        if (domain) {
+          url += `?domain=${encodeURIComponent(domain)}`;
+        }
+
+        const response = await fetch(url, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

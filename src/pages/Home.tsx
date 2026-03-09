@@ -188,10 +188,10 @@ const Home = () => {
             The best time to start learning was yesterday. The second best time is today.
           </p>
           <Link
-            to="/login"
+            to={isAuthenticated ? "/dashboard" : "/login"}
             className="inline-flex items-center gap-3 px-10 py-5 bg-black dark:bg-white text-white dark:text-black rounded-full font-black text-xs uppercase tracking-widest hover:scale-105 transition-all no-underline shadow-2xl"
           >
-            Start Your First Briefing
+            {isAuthenticated ? "Go to Dashboard" : "Start Your First Briefing"}
           </Link>
         </motion.div>
       </section>

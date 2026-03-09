@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
-import { subscriptionApi, type UserSubscription, type Article } from "../api/subscription";
+import { subscriptionApi, type UserSubscription } from "../api/subscription";
 import { Loader2, ArrowRight, Calendar, Clock } from "lucide-react";
 
 const Dashboard = () => {
@@ -16,7 +16,8 @@ const Dashboard = () => {
     const loadSubs = async () => {
       try {
         const data = await subscriptionApi.listMySubscriptions();
-        setSubs(data);
+        const activeSubs = data.filter((s) => s.status === "active");
+        setSubs(activeSubs);
       } catch {
         setError("Failed to load subscriptions");
       } finally {
@@ -29,8 +30,9 @@ const Dashboard = () => {
   const openTodayForDomain = async (domain: string) => {
     try {
       setProcessingDomain(domain);
-      const article: Article = await subscriptionApi.getTodayArticleByDomain(domain);
-      navigate(`/subscriptions/article/${article.slug}`);
+      const formattedDomain = domain.replace(/_/g, " ");
+      const article = await subscriptionApi.getTodayArticleByDomain(formattedDomain);
+      navigate(`/subscriptions/article/${article.slug}`, { state: { article } });
     } catch {
       setError("Could not load today's article for selected subscription");
     } finally {
@@ -45,7 +47,7 @@ const Dashboard = () => {
       <main className="flex-grow pt-24 pb-24 px-6 max-w-6xl mx-auto w-full">
         <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-6">Your Subscriptions</h1>
         <p className="text-gray-500 dark:text-gray-400 text-lg mb-10">
-          Select a subscribed domain to read today’s briefing.
+          Select a subscribed plan below to read today’s briefing.
         </p>
 
         {loading ? (
@@ -56,16 +58,20 @@ const Dashboard = () => {
           <div className="text-red-600">{error}</div>
         ) : subs.length === 0 ? (
           <div className="text-gray-600 dark:text-gray-400">
-            No subscriptions yet. Visit Pricing to subscribe.
+            No active subscriptions yet. Visit Pricing to subscribe.
           </div>
         ) : (
           <div className="grid md:grid-cols-2 gap-8">
             {subs.map((s) => (
               <div
                 key={s.subscription_id}
-                className="bg-white dark:bg-[#0c0c0c] border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-2xl"
+                onClick={() => {
+                  if (processingDomain !== s.domain) openTodayForDomain(s.domain);
+                }}
+                className={`bg-white dark:bg-[#0c0c0c] border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-2xl flex flex-col transition-all ${processingDomain === s.domain ? "opacity-75 pointer-events-none cursor-wait" : "cursor-pointer hover:border-blue-500 hover:scale-[1.02]"
+                  }`}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-4">
                   <div>
                     <span className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider rounded-full">
                       {s.domain}
@@ -79,21 +85,11 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={() => openTodayForDomain(s.domain)}
-                  disabled={s.status !== "active" || processingDomain === s.domain}
-                  className="mt-6 inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-black dark:bg-white text-white dark:text-black font-bold hover:opacity-90 disabled:opacity-60"
-                >
-                  {processingDomain === s.domain ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" /> Opening…
-                    </>
-                  ) : (
-                    <>
-                      Read Today’s Briefing <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
+
+                <div className="mt-6 flex items-center justify-between text-blue-600 dark:text-blue-400 font-bold">
+                  <span>{processingDomain === s.domain ? "Opening..." : "Read Today's Briefing"}</span>
+                  {processingDomain === s.domain ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
+                </div>
               </div>
             ))}
           </div>
@@ -105,4 +101,4 @@ const Dashboard = () => {
   );
 }
 
-export default Dashboard
+export default Dashboard;

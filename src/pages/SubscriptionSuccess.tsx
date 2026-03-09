@@ -20,26 +20,14 @@ const SubscriptionSuccess = () => {
         const checkStatus = async () => {
             try {
                 pollCount.current += 1;
-                const sid = searchParams.get("sid");
-                if (sid) {
-                    const list = await subscriptionApi.listMySubscriptions();
-                    const match = (Array.isArray(list) ? list : []).find(
-                        (s) =>
-                            (s.razorpay_id === sid || s.subscription_id === sid) &&
-                            s.status === "active"
-                    );
-                    if (match) {
-                        setStatus("success");
-                        if (intervalRef.current) clearInterval(intervalRef.current);
-                        return;
-                    }
-                } else {
-                    const data = await subscriptionApi.getSubscriptionStatus();
-                    if (data.status === "active") {
-                        setStatus("success");
-                        if (intervalRef.current) clearInterval(intervalRef.current);
-                        return;
-                    }
+
+                // Proactively ask backend to confirm with Razorpay
+                const confirmData = await subscriptionApi.confirmSubscription();
+
+                if (confirmData.status === "active") {
+                    setStatus("success");
+                    if (intervalRef.current) clearInterval(intervalRef.current);
+                    return;
                 }
 
                 if (pollCount.current >= MAX_POLLS) {

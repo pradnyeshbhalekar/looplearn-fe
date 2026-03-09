@@ -5,7 +5,7 @@ import Footer from "../components/layout/Footer";
 import { useTheme } from "../context/ThemeContext";
 import { Clock, Calendar, Layout } from "lucide-react";
 import TodaysSkeleton from "../components/skeletons/TodaysSkeleton";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { subscriptionApi, type Article } from "../api/subscription";
 
 interface ArticleWithDomain extends Article {
@@ -15,6 +15,7 @@ interface ArticleWithDomain extends Article {
 const SubscribedArticle: React.FC = () => {
   const { theme } = useTheme();
   const { slug } = useParams<{ slug: string }>();
+  const location = useLocation();
 
   const [article, setArticle] = useState<ArticleWithDomain | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -37,6 +38,13 @@ const SubscribedArticle: React.FC = () => {
 
   useEffect(() => {
     const fetchArticle = async () => {
+      // If we already passed the article via router state from the Dashboard, use it!
+      if (location.state?.article) {
+        setArticle(location.state.article);
+        setLoading(false);
+        return;
+      }
+
       if (!slug) return;
       try {
         const data = await subscriptionApi.getArticleBySlug(slug);
@@ -48,7 +56,7 @@ const SubscribedArticle: React.FC = () => {
       }
     };
     fetchArticle();
-  }, [slug]);
+  }, [slug, location.state]);
 
   useEffect(() => {
     if (!article?.diagram || !diagramRef.current) return;

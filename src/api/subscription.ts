@@ -55,22 +55,28 @@ export const subscriptionApi = {
         const response = await api.get("/api/subscriptions/me");
         return response.data;
     },
-    
+
     confirmSubscription: async (): Promise<{ status: string; message?: string }> => {
         const response = await api.post("/api/subscriptions/confirm");
         return response.data;
     },
-    
+
     listMySubscriptions: async (): Promise<UserSubscription[]> => {
-        const response = await api.get("/api/subscriptions/me/list");
-        return response.data;
+        const response = await api.get("/api/subscriptions/me");
+        if (response.data.subscriptions) {
+            return response.data.subscriptions;
+        } else if (response.data.subscription) {
+            return [response.data.subscription];
+        }
+        return [];
     },
-    
+
     getTodayArticleByDomain: async (domain: string): Promise<Article> => {
-        const response = await api.get(`/api/subscriptions/me/today`, { params: { domain } });
+        const formattedDomain = domain.replace(/_/g, " ");
+        const response = await api.get(`/api/subscriptions/me/today?domain=${encodeURIComponent(formattedDomain)}`);
         return response.data;
     },
-    
+
     getArticleBySlug: async (slug: string): Promise<Article & { subscription?: UserSubscription }> => {
         const response = await api.get(`/api/subscriptions/me/article/${slug}`);
         return response.data;
