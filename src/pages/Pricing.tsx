@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Loader2, ArrowRight, AlertTriangle, X } from "lucide-react";
@@ -8,9 +8,14 @@ import { fetchPlans, createSubscription, clearSubscriptionState } from "../featu
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import { subscriptionApi, type UserSubscription } from "../api/subscription";
+import PricingSkeleton from "../components/skeletons/PricingSkeleton";
 
 const Pricing = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const isTeamPlan = searchParams.get("team") === "true";
+    const workspaceId = searchParams.get("workspace_id");
+
     const dispatch = useDispatch<AppDispatch>();
     const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
     const { plans, loadingPlans, subscribing, subscribeError } = useSelector(
@@ -56,7 +61,15 @@ const Pricing = () => {
 
         try {
             setProcessingPlanId(planId);
-            const response = await dispatch(createSubscription(planId)).unwrap();
+            // We'll need to update the subscription action to handle these
+            // Note: Since subscriptionSlice requires modifying the Redux payload,
+            // we will temporarily inject them into localStorage to be picked up by the API,
+            // or we must update the redux action. We will update the redux action shortly!
+            const response = await dispatch(createSubscription({
+                planId,
+                isTeam: isTeamPlan,
+                workspaceId
+            } as any)).unwrap();
             if (response && response.razorpay && response.razorpay.short_url) {
                 window.open(response.razorpay.short_url, "_blank", "noopener,noreferrer");
                 const sid = response.razorpay.subscription_id || response.subscription_id;
@@ -86,20 +99,31 @@ const Pricing = () => {
                     transition={{ duration: 0.6 }}
                     className="text-center max-w-3xl mx-auto mb-16"
                 >
-                    <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-6">
-                        Invest in your <span className="text-blue-600 dark:text-blue-500">mastery</span>.
-                    </h1>
-                    <p className="text-gray-500 dark:text-gray-400 text-lg md:text-xl font-medium">
-                        Join the elite developers who accelerate their learning with one high-signal briefing daily.
-                    </p>
+                    {isTeamPlan ? (
+                        <>
+                            <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-6">
+                                Power your <span className="text-blue-600 dark:text-blue-500">entire team</span>.
+                            </h1>
+                            <p className="text-gray-500 dark:text-gray-400 text-lg md:text-xl font-medium">
+                                Purchase a Team License to automatically unlock daily technical briefings for everyone in your Workspace.
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-6">
+                                Invest in your <span className="text-blue-600 dark:text-blue-500">mastery</span>.
+                            </h1>
+                            <p className="text-gray-500 dark:text-gray-400 text-lg md:text-xl font-medium">
+                                Join the elite developers who accelerate their learning with one high-signal briefing daily.
+                            </p>
+                        </>
+                    )}
                 </motion.div>
 
                 {/* subscribeError is handled via centered modal below */}
 
                 {loadingPlans ? (
-                    <div className="flex justify-center items-center py-20 text-blue-500">
-                        <Loader2 className="animate-spin w-10 h-10" />
-                    </div>
+                    <PricingSkeleton />
                 ) : (
                     <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto w-full">
                         {(Array.isArray(plans) ? plans : []).map((plan, index) => (
@@ -118,12 +142,16 @@ const Pricing = () => {
                                         <span className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider rounded-full mb-4">
                                             {plan.domain}
                                         </span>
-                                        <h2 className="text-3xl font-black mb-2 text-black dark:text-white">{plan.name}</h2>
+                                        <h2 className="text-3xl font-black mb-2 text-black dark:text-white">
+                                            {isTeamPlan ? `${plan.name} Team License` : plan.name}
+                                        </h2>
                                         <div className="flex items-baseline gap-1">
-                                            <span className="text-5xl font-black tracking-tighter text-black dark:text-white">₹{plan.monthly_price}</span>
+                                            <span className="text-5xl font-black tracking-tighter text-black dark:text-white">
+                                                ₹{isTeamPlan ? (plan.monthly_price * 4) : plan.monthly_price}
+                                            </span>
                                             <span className="text-gray-500 font-medium">/{plan.billing_cycle || "month"}</span>
                                         </div>
-                                        {domainsWithActive.has(plan.domain) && (
+                                        {domainsWithActive.has(plan.domain) && !isTeamPlan && (
                                             <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400">
                                                 Subscribed
                                             </div>
@@ -160,7 +188,7 @@ const Pricing = () => {
 
                                     <button
                                         onClick={() => handleSubscribe(plan.id)}
-                                        disabled={subscribing || domainsWithActive.has(plan.domain)}
+                                        disabled={subscribing || (!isTeamPlan && domainsWithActive.has(plan.domain))}
                                         className="w-full py-4 mt-auto bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-black rounded-xl font-bold transition-colors flex items-center justify-center gap-2 group/btn disabled:opacity-70 disabled:cursor-not-allowed"
                                     >
                                         {subscribing && processingPlanId === plan.id ? (
@@ -169,11 +197,11 @@ const Pricing = () => {
                                             </>
                                         ) : (
                                             <>
-                                                {domainsWithActive.has(plan.domain)
+                                                {!isTeamPlan && domainsWithActive.has(plan.domain)
                                                     ? "Already Subscribed"
                                                     : isAuthenticated
-                                                    ? "Subscribe Now"
-                                                    : "Login to Subscribe"}
+                                                        ? (isTeamPlan ? "Buy Team License" : "Subscribe Now")
+                                                        : "Login to Subscribe"}
                                                 <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                                             </>
                                         )}

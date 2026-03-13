@@ -47,8 +47,12 @@ export const subscriptionApi = {
         return response.data;
     },
 
-    createSubscription: async (planId: string): Promise<SubscriptionResponse> => {
-        const response = await api.post("/api/subscriptions/subscribe", { plan_id: planId });
+    createSubscription: async (payload: { planId: string, isTeam?: boolean, workspaceId?: string | null }): Promise<SubscriptionResponse> => {
+        const response = await api.post("/api/subscriptions/subscribe", {
+            plan_id: payload.planId,
+            is_team: payload.isTeam,
+            workspace_id: payload.workspaceId
+        });
         return response.data;
     },
 

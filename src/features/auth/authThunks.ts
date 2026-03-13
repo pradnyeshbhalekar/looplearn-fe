@@ -26,3 +26,19 @@ export const googleLogin = createAsyncThunk<
     )
   }
 })
+
+export const fetchMe = createAsyncThunk<
+  User,
+  void,
+  { rejectValue: string }
+>("auth/fetchMe", async (_, { rejectWithValue }) => {
+  try {
+    const res = await api.get("/api/auth/me")
+    return res.data
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { message?: string } } }
+    return rejectWithValue(
+      error.response?.data?.message || "Failed to fetch user profile"
+    )
+  }
+})

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 
-const Logo = ({ className = "" }: { className?: string }) => {
+const Logo = ({ className = "", hideText = false }: { className?: string; hideText?: boolean }) => {
   return (
     <Link
       to="/"
@@ -15,7 +15,7 @@ const Logo = ({ className = "" }: { className?: string }) => {
         ∞
       </span>
 
-      <span className="text-secondary dark:text-white">plearn</span>
+      {!hideText && <span className="text-secondary dark:text-white">plearn</span>}
     </Link>
   )
 }

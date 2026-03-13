@@ -6,6 +6,8 @@ import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { Layers, Search, Check, X, Clock, Calendar, ZoomIn, ZoomOut, Maximize } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
 import type { Candidate } from "../types/admin";
+import { Loader2 } from "lucide-react";
+import AdminSkeleton from "../components/skeletons/AdminSkeleton";
 
 mermaid.initialize({ startOnLoad: false, theme: 'dark' });
 
@@ -24,6 +26,9 @@ export const Admin: React.FC = () => {
 
   const [isApproving, setIsApproving] = useState(false);
   const [publishDate, setPublishDate] = useState("");
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isActionInProgress, setIsActionInProgress] = useState(false);
 
   const token = localStorage.getItem("token");
 
@@ -47,6 +52,8 @@ export const Admin: React.FC = () => {
       setQueued(Array.isArray(queuedData) ? queuedData : []);
     } catch (err) {
       console.error("Queue fetch error:", err);
+    } finally {
+      setIsLoading(false);
     }
   }, [token]);
 
@@ -103,6 +110,7 @@ export const Admin: React.FC = () => {
         body = JSON.stringify({ publish_date: isoDate });
       }
 
+      setIsActionInProgress(true);
       const res = await fetch(url, {
         method: "POST",
         headers,
@@ -124,6 +132,8 @@ export const Admin: React.FC = () => {
 
     } catch (e: any) {
       alert(`${action} failed: ${e.message}`);
+    } finally {
+      setIsActionInProgress(false);
     }
   };
 
@@ -141,7 +151,10 @@ export const Admin: React.FC = () => {
           </p>
         </header>
 
-        <div className="grid lg:grid-cols-12 gap-8">
+        {isLoading ? (
+          <AdminSkeleton />
+        ) : (
+          <div className="grid lg:grid-cols-12 gap-8">
 
           {/* Sidebar Queue List */}
           <div className="lg:col-span-4 flex flex-col h-[75vh]">
@@ -153,13 +166,13 @@ export const Admin: React.FC = () => {
                   onClick={() => { setActiveTab('pending'); setSelectedArticle(null); }}
                   className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${activeTab === 'pending' ? 'bg-white dark:bg-[#111] shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-black dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'}`}
                 >
-                  <Layers size={14} /> Pending ({candidates.length})
+                  <Layers size={14} /> PENDING ({candidates.length})
                 </button>
                 <button
                   onClick={() => { setActiveTab('queued'); setSelectedArticle(null); }}
                   className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${activeTab === 'queued' ? 'bg-white dark:bg-[#111] shadow-sm text-green-600 dark:text-green-400' : 'text-gray-500 hover:text-black dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'}`}
                 >
-                  <Calendar size={14} /> Scheduled ({queued.length})
+                  <Calendar size={14} /> SCHEDULED ({queued.length})
                 </button>
               </div>
 
@@ -218,15 +231,17 @@ export const Admin: React.FC = () => {
                     <div className="flex gap-3">
                       <button
                         onClick={() => setIsApproving(true)}
-                        className="bg-black dark:bg-white text-white dark:text-black px-6 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase flex items-center gap-2 hover:scale-105 transition-transform"
+                        disabled={isActionInProgress}
+                        className="bg-black dark:bg-white text-white dark:text-black px-6 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase flex items-center gap-2 hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100"
                       >
-                        <Check size={14} /> Approve
+                        {isActionInProgress ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} Approve
                       </button>
                       <button
                         onClick={() => setIsRejecting(true)}
-                        className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-6 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase flex items-center gap-2 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+                        disabled={isActionInProgress}
+                        className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-6 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase flex items-center gap-2 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors disabled:opacity-50"
                       >
-                        <X size={14} /> Reject
+                        {isActionInProgress ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />} Reject
                       </button>
                     </div>
                   )}
@@ -310,7 +325,8 @@ export const Admin: React.FC = () => {
             )}
           </div>
         </div>
-      </main>
+      )}
+    </main>
 
       {/* APPROVE MODAL */}
       <AnimatePresence>

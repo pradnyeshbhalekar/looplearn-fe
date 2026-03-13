@@ -2,6 +2,7 @@
 import { useEffect } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { useAppSelector } from "../app/hook"
+import { Loader2 } from "lucide-react"
 
 const AuthCallback = () => {
   const navigate = useNavigate()
@@ -28,8 +29,9 @@ const AuthCallback = () => {
   }, [isAuthenticated, navigate, searchParams])
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-gray-500 dark:text-gray-400">Redirecting...</p>
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+      <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+      <p className="text-gray-500 dark:text-gray-400 font-medium">Authenticating...</p>
     </div>
   )
 }

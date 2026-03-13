@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit"
 import type { AuthState } from "./auth.types"
-import { googleLogin } from "./authThunks"
+import { googleLogin, fetchMe } from "./authThunks"
 
 const token = localStorage.getItem("token")
 
@@ -39,6 +39,18 @@ const authSlice = createSlice({
       .addCase(googleLogin.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || "Google login failed"
+      })
+      .addCase(fetchMe.pending, (state) => {
+        state.loading = true
+      })
+      .addCase(fetchMe.fulfilled, (state, action) => {
+        state.loading = false
+        state.user = action.payload
+        state.isAuthenticated = true
+      })
+      .addCase(fetchMe.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || "Failed to fetch user profile"
       })
   }
 })

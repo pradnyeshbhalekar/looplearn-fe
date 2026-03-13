@@ -37,9 +37,9 @@ export const fetchPlans = createAsyncThunk(
 
 export const createSubscription = createAsyncThunk(
     "subscription/createSubscription",
-    async (planId: string, { rejectWithValue }) => {
+    async (payload: { planId: string, isTeam?: boolean, workspaceId?: string | null }, { rejectWithValue }) => {
         try {
-            const data = await subscriptionApi.createSubscription(planId);
+            const data = await subscriptionApi.createSubscription(payload);
             return data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.message || "Failed to create subscription");
