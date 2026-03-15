@@ -2,35 +2,35 @@ import Logo from "../Logo"
 
 const Footer = () => {
   return (
-    <footer className="border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0a0a0a]">
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex flex-col items-center md:items-start gap-2">
-            <Logo className="text-lg" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              One topic. Every day. No overwhelm.
+    <footer className="relative bg-black border-t border-white/5 pt-24 pb-12 overflow-hidden text-white">
+      
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-12 mb-12">
+          <div className="flex flex-col items-start gap-6">
+            <Logo className="text-xl font-black tracking-widest text-white" />
+            <p className="max-w-sm text-gray-500 font-medium leading-relaxed">
+              Distilling engineering complexity into high-signal briefings. Built for the persistence, delivered every 24 hours.
             </p>
           </div>
 
-          <div className="flex gap-8 text-sm text-gray-500 dark:text-gray-400">
-            <a href="#why" className="hover:text-primary no-underline">
-              Why
-            </a>
-            <a href="#who" className="hover:text-primary no-underline">
-              Who
-            </a>
-            <a href="#how" className="hover:text-primary no-underline">
-              How
-            </a>
+          <div className="flex gap-12">
+            <div className="flex flex-col gap-4">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-500 mb-2">Protocol</h4>
+              <a href="#why" className="text-sm text-gray-400 hover:text-white transition-colors no-underline font-medium">Concept</a>
+              <a href="#who" className="text-sm text-gray-400 hover:text-white transition-colors no-underline font-medium">Audience</a>
+              <a href="#how" className="text-sm text-gray-400 hover:text-white transition-colors no-underline font-medium">Methodology</a>
+            </div>
           </div>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 text-center text-xs text-gray-400 dark:text-gray-500">
-          © {new Date().getFullYear()} LoopLearn. All rights reserved.
+        <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
+          <p className="text-[10px] font-mono text-gray-600 uppercase tracking-widest">
+            © {new Date().getFullYear()} LoopLearn. Secure Transmission.
+          </p>
         </div>
       </div>
     </footer>
-  )
-}
+  );
+};
 
 export default Footer

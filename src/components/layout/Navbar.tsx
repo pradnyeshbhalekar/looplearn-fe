@@ -26,7 +26,7 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-[100] px-4 sm:px-6 py-4">
-      <div className="max-w-7xl mx-auto flex items-center justify-between h-14 px-4 sm:px-6 rounded-full border border-gray-200/50 dark:border-white/10 bg-white/70 dark:bg-black/70 backdrop-blur-xl shadow-sm transition-colors relative z-50">
+      <div className="max-w-7xl mx-auto flex items-center justify-between h-14 px-4 sm:px-6 rounded-full border border-gray-200/50 dark:border-white/10 bg-white/70 dark:bg-black backdrop-blur-xl shadow-sm transition-colors relative z-50">
 
         {/* LEFT: Brand/Logo */}
         <div className="flex items-center">
@@ -97,9 +97,9 @@ const Navbar = () => {
             <Link
               to="/login"
               onClick={closeMobileMenu}
-              className="flex items-center gap-2 px-5 sm:px-6 py-2 text-xs font-black uppercase tracking-widest rounded-full bg-black dark:bg-white text-white dark:text-black hover:scale-105 transition-all shadow-sm no-underline whitespace-nowrap"
+              className="flex items-center gap-2 px-6 sm:px-7 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] rounded-3xl bg-black text-white hover:bg-blue-700 hover:scale-[1.02] transition-all shadow-[0_10px_20px_rgba(37,99,235,0.2)] no-underline whitespace-nowrap"
             >
-              <Fingerprint size={14} />
+              <Fingerprint size={14} strokeWidth={3} />
               <span className="hidden sm:inline">Access</span>
             </Link>
           ) : (

@@ -1,18 +1,10 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, useScroll, useSpring } from "framer-motion"; // For scroll animations
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import {
-  Target,
-  Infinity as InfinityIcon,
-  Code2,
-  GraduationCap,
-  Repeat,
   ArrowRight,
-  XCircle,
-  CheckCircle2,
-  Terminal,
-  Layers
 } from "lucide-react";
 
 // Animation Variants
@@ -21,6 +13,58 @@ const fadeInUp = {
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true },
   transition: { duration: 0.6, ease: "easeOut" as any }
+};
+
+const TypingText = ({ phrases, className = "" }: { phrases: { text: string, className?: string }[], className?: string }) => {
+  const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
+  const [displayedText, setDisplayedText] = useState("");
+  const [complete, setComplete] = useState(false);
+
+  useEffect(() => {
+    let timeout: any;
+    const currentPhrase = phrases[currentPhraseIndex];
+
+    if (!currentPhrase) {
+      setComplete(true);
+      return;
+    }
+
+    if (displayedText.length < currentPhrase.text.length) {
+      timeout = setTimeout(() => {
+        setDisplayedText(currentPhrase.text.slice(0, displayedText.length + 1));
+      }, 70);
+    } else if (currentPhraseIndex < phrases.length - 1) {
+      // Move to next phrase after a short pause
+      timeout = setTimeout(() => {
+        setCurrentPhraseIndex(prev => prev + 1);
+        setDisplayedText("");
+      }, 500);
+    } else {
+      setComplete(true);
+    }
+
+    return () => clearTimeout(timeout);
+  }, [displayedText, currentPhraseIndex, phrases]);
+
+  return (
+    <div className={className}>
+      {phrases.map((phrase, idx) => (
+        <div key={idx} className="min-h-[1.2em] flex items-center justify-start md:justify-center">
+          <span className={phrase.className || ""}>
+            {idx < currentPhraseIndex ? phrase.text : idx === currentPhraseIndex ? displayedText : ""}
+            {idx === currentPhraseIndex && (
+              <motion.span
+                animate={{ opacity: [1, 0] }}
+                transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                className="inline-block w-[4px] h-[0.9em] bg-blue-600 ml-1 translate-y-1"
+                style={{ display: complete && idx === phrases.length - 1 ? "inline-block" : !complete && idx === currentPhraseIndex ? "inline-block" : "none" }}
+              />
+            )}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
 };
 
 const Home = () => {
@@ -36,7 +80,10 @@ const Home = () => {
   });
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#080808] transition-colors duration-300 scroll-smooth">
+    <div className="min-h-screen bg-white dark:bg-black transition-colors duration-500 scroll-smooth selection:bg-blue-500/30 font-sans">
+      {/* Subtle Grain Overlay */}
+      <div className="fixed inset-0 z-[120] pointer-events-none opacity-[0.03] dark:opacity-[0.05] contrast-150 brightness-150" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }}></div>
+
       {/* Scroll Progress Bar */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-1 bg-blue-600 z-[110] origin-left"
@@ -46,155 +93,241 @@ const Home = () => {
       <Navbar />
 
       {/* --- HERO SECTION --- */}
-      <section className="pt-44 pb-24 px-6 overflow-hidden">
+      <section className="relative pt-64 pb-32 px-6 flex flex-col items-center justify-center overflow-hidden">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="max-w-5xl mx-auto text-center"
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-7xl mx-auto flex flex-col items-center relative z-10 w-full"
         >
+          <div className="w-full max-w-5xl">
+            <h1 className="text-5xl md:text-[6rem] font-black leading-[1.1] tracking-[-0.05em] text-black dark:text-white mb-10 min-h-[2.5em]">
+              <TypingText 
+                phrases={[
+                  { text: "One topic a day." },
+                  { text: "Mastered.", className: "text-blue-600 italic" }
+                ]} 
+              />
+            </h1>
+          </div>
 
-          <h1 className="text-6xl md:text-8xl font-black leading-[0.9] tracking-[-0.05em] text-black dark:text-white mb-10">
-            One topic a day. <br />
-            <span className="text-blue-600">Mastered.</span>
-          </h1>
-
-          <p className="max-w-2xl mx-auto text-lg md:text-xl text-gray-500 dark:text-gray-400 font-medium leading-relaxed mb-12">
-            LoopLearn delivers a single, high-signal technical briefing every 24 hours.
+          <p className="max-w-2xl mx-auto text-center text-xl md:text-2xl text-gray-400 dark:text-gray-500 font-semibold leading-relaxed mb-16 tracking-tight">
+            LoopLearn delivers a single, high-signal technical briefing every 24 hours. 
             Built for engineering minds who value depth over volume.
           </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <Link
               to={isAuthenticated ? "/todays" : "/login"}
-              className="group flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full font-black text-xs uppercase tracking-widest hover:opacity-90 transition-all no-underline"
+              className="group relative flex items-center gap-4 px-12 py-5 bg-black dark:bg-white text-white dark:text-black rounded-full font-black text-xs uppercase tracking-widest hover:scale-105 transition-all no-underline shadow-2xl"
             >
-              {isAuthenticated ? "Enter Briefing" : "Begin Learning"}
-              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              {isAuthenticated ? "Enter Command Center" : "Access Briefing"}
+              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </Link>
             <a
               href="#how"
-              className="px-8 py-4 border border-gray-200 dark:border-gray-800 text-black dark:text-white rounded-full font-black text-xs uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-white/5 transition-all no-underline"
+              className="px-10 py-5 border border-gray-200 dark:border-gray-800 text-black dark:text-white rounded-full font-black text-xs uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-white/5 transition-all no-underline"
             >
-              The Methodology
+              Methodology
             </a>
           </div>
         </motion.div>
       </section>
 
       {/* --- PROBLEM / SOLUTION --- */}
-      <section id="why" className="py-24 px-6 border-y border-gray-100 dark:border-gray-900 bg-[#fafafa] dark:bg-[#0a0a0a]">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12">
-          <motion.div {...fadeInUp} className="space-y-6">
-            <XCircle size={32} className="text-red-500/50" />
-            <h2 className="text-3xl font-black tracking-tighter text-black dark:text-white uppercase">The Noise</h2>
-            <p className="text-gray-500 dark:text-gray-400 text-lg leading-relaxed font-medium">
-              Tutorial hell is real. 100-hour courses and endless tabs. Most platforms optimize for "watch time," not retention.
+      <section id="why" className="py-32 px-6 relative border-y border-gray-100 dark:border-white/5 bg-[#fafafa] dark:bg-black overflow-hidden">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-20 relative z-10">
+          <motion.div {...fadeInUp} className="space-y-8">
+            <div className="w-12 h-1 bg-red-500/30" />
+            <h2 className="text-4xl font-black tracking-tighter text-black dark:text-white uppercase leading-none">The Noise.</h2>
+            <p className="text-gray-500 dark:text-gray-400 text-xl leading-relaxed font-medium tracking-tight">
+              Tutorial hell is a symptom of information overflow. Most platforms optimize for watch-time. We optimize for high-signal technical retention.
             </p>
           </motion.div>
-          <motion.div {...fadeInUp} transition={{ delay: 0.2 }} className="space-y-6">
-            <CheckCircle2 size={32} className="text-blue-600" />
-            <h2 className="text-3xl font-black tracking-tighter text-black dark:text-white uppercase">The Loop</h2>
-            <p className="text-gray-500 dark:text-gray-400 text-lg leading-relaxed font-medium">
-              We provide one structured entry point daily. No backlogs. Just one core concept, one visual blueprint, and one application.
+          
+          <motion.div {...fadeInUp} transition={{ delay: 0.2 }} className="space-y-8">
+            <div className="w-12 h-1 bg-blue-600" />
+            <h2 className="text-4xl font-black tracking-tighter text-black dark:text-white uppercase leading-none">The Signal.</h2>
+            <p className="text-gray-500 dark:text-gray-400 text-xl leading-relaxed font-medium tracking-tight">
+              One structured entry point daily. No backlogs. Just one core concept, one visual blueprint, and one high-fidelity implementation guide.
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* --- TARGET AUDIENCE (Bento Grid) --- */}
-      <section id="who" className="py-32 px-6">
-        <div className="max-w-6xl mx-auto">
-          <motion.div {...fadeInUp} className="mb-16">
-            <p className="text-[10px] font-black tracking-[0.3em] uppercase text-blue-600 mb-4">Audience Profile</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-black dark:text-white uppercase">Built for the persistent.</h2>
+      {/* --- CORE FEATURES --- */}
+      <section className="py-24 px-6 border-b border-gray-100 dark:border-white/5 bg-white dark:bg-black">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12">
+          <motion.div {...fadeInUp} className="p-12 rounded-[2.5rem] bg-gray-50 dark:bg-zinc-950 border border-gray-100 dark:border-white/5">
+            <span className="text-[10px] font-mono text-blue-600 uppercase tracking-widest mb-6 block">TEAM INFRASTRUCTURE</span>
+            <h3 className="text-3xl font-black uppercase tracking-tight text-black dark:text-white mb-6">Team Workspaces</h3>
+            <p className="text-gray-500 dark:text-gray-400 text-lg leading-relaxed font-medium">
+              Onboard your junior developers with high-yield seat packs. As a senior engineer, oversee their daily loops and ensure your team is mastering the stack at scale.
+            </p>
+          </motion.div>
+ 
+          <motion.div {...fadeInUp} transition={{ delay: 0.2 }} className="p-12 rounded-[2.5rem] bg-gray-50 dark:bg-zinc-950 border border-gray-100 dark:border-white/5">
+            <span className="text-[10px] font-mono text-blue-600 uppercase tracking-widest mb-6 block">NEURAL SYNTHESIS</span>
+            <h3 className="text-3xl font-black uppercase tracking-tight text-black dark:text-white mb-6">Commuter Mode</h3>
+            <p className="text-gray-500 dark:text-gray-400 text-lg leading-relaxed font-medium">
+              High-quality neural audio synthesis. Listen to the daily briefing in Commuter Mode—anywhere, any device, with seamless state persistence.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* --- TARGET AUDIENCE --- */}
+      <section id="who" className="py-44 px-6 relative bg-white dark:bg-black">
+        <div className="max-w-7xl mx-auto">
+          <motion.div {...fadeInUp} className="mb-32">
+            <h2 className="text-5xl md:text-8xl font-black tracking-tighter text-black dark:text-white uppercase leading-[0.85]">
+              Built for the <br />
+              <span className="text-gray-300 dark:text-white/20 italic">Deep thinkers.</span>
+            </h2>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-3 gap-12">
             {[
-              { icon: <Code2 size={24} />, title: "Developers", desc: "Strengthen your mental model of systems without leaving your flow state." },
-              { icon: <GraduationCap size={24} />, title: "Engineers", desc: "Bridge the gap between theory and production with daily briefings." },
-              { icon: <InfinityIcon size={24} />, title: "Architects", desc: "Understand the full stack by spending 5 minutes a day on diverse domains." },
+              { title: "Architects", desc: "For those who need to understand the 'why' before the 'how'. We map mental models to production reality." },
+              { title: "Senior Engineers", desc: "Skip the basics. We go deep on internals, performance trade-offs, and system constraints." },
+              { title: "Full Stack", desc: "Bridge the gap between infrastructure and application. 5 minutes total daily commitment." },
             ].map((item, i) => (
               <motion.div
                 key={i}
                 {...fadeInUp}
                 transition={{ delay: i * 0.1 }}
-                className="p-8 rounded-3xl border border-gray-100 dark:border-gray-900 bg-white dark:bg-[#0c0c0c] hover:border-blue-500/30 transition-colors"
+                className="group border-t border-gray-100 dark:border-white/10 pt-10"
               >
-                <div className="text-blue-600 mb-6">{item.icon}</div>
-                <h3 className="text-xl font-black uppercase tracking-tight text-black dark:text-white mb-4">{item.title}</h3>
-                <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed font-medium">{item.desc}</p>
+                <span className="text-blue-600 font-mono text-xs mb-6 block">PROF 0{i + 1}</span>
+                <h3 className="text-3xl font-black uppercase tracking-tight text-black dark:text-white mb-6 leading-tight group-hover:text-blue-600 transition-colors">{item.title}</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-lg leading-relaxed font-medium opacity-80">{item.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* --- STEPS (The Daily Protocol - Improved Colors) --- */}
-      <section id="how" className="py-32 px-6 bg-gray-50 dark:bg-black text-black dark:text-white transition-colors duration-300">
+      {/* --- PROTOCOL (Methodology) --- */}
+      <section id="how" className="py-44 px-6 bg-gray-50 dark:bg-black text-black dark:text-white selection:bg-black selection:text-white">
         <div className="max-w-4xl mx-auto">
-          <motion.div {...fadeInUp} className="text-center mb-24">
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase mb-6">The Daily Protocol</h2>
-            <div className="h-1 w-24 bg-blue-600 mx-auto" />
+          <motion.div {...fadeInUp} className="mb-32">
+             <h2 className="text-5xl md:text-8xl font-black tracking-tighter uppercase mb-6 leading-none">The Protocol.</h2>
+             <p className="text-gray-500 font-bold uppercase tracking-[0.4em] text-xs">Standardized Learning Flow</p>
           </motion.div>
 
-          <div className="space-y-24 relative">
-            <div className="absolute left-6 top-0 bottom-0 w-px bg-gray-200 dark:bg-white/10 hidden md:block" />
-
+          <div className="space-y-40 relative">
             {[
-              { icon: <Terminal />, title: "Distilled Explanation", desc: "We strip away the fluff. You get the 'why' and the 'how' in a format that respects your time." },
-              { icon: <Layers />, title: "System Blueprint", desc: "Every topic includes a visual architecture diagram to help you map the concept spatially." },
-              { icon: <Target />, title: "Case Implementation", desc: "Connect theory to reality with a focused case study on how this concept solves actual problems." },
-              { icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>, title: "Commuter Mode", desc: "Listen on the go. Every briefing is seamlessly converted to high-quality audio for your daily commute." },
+              { title: "Distilled Briefing", desc: "No fluff. High-signal technical extraction that respects your flow state. We optimize for the first 300 seconds of your day." },
+              { title: "Structural Blueprint", desc: "Architecture mapping. Spatially visualize the concept to anchor the mental model permanently." },
+              { title: "Implementation Vector", desc: "Direct production implementation. We provide the 'how' through high-fidelity case studies and walkthroughs." },
             ].map((item, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.2 }}
-                className="relative flex flex-col md:flex-row gap-8 md:gap-16 items-start group"
+                transition={{ duration: 0.8, delay: i * 0.1 }}
+                className="relative group"
               >
-                <div className="hidden md:flex absolute left-0 w-12 h-12 rounded-full bg-blue-600 items-center justify-center ring-8 ring-gray-50 dark:ring-black z-10 text-white">
-                  <span className="text-xs font-black">{i + 1}</span>
-                </div>
-                <div className="md:pl-24">
-                  <div className="flex items-center gap-3 text-blue-600 dark:text-blue-500 mb-4 uppercase font-black tracking-widest text-xs">
-                    {item.icon} Step 0{i + 1}
-                  </div>
-                  <h3 className="text-3xl font-black uppercase tracking-tight mb-4 group-hover:text-blue-600 transition-colors">{item.title}</h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-lg leading-relaxed font-medium">{item.desc}</p>
-                </div>
+                <div className="mb-4 text-blue-600 font-mono text-xs tracking-widest">STEP 0{i + 1}</div>
+                <h3 className="text-4xl md:text-6xl font-black uppercase tracking-tight mb-8 leading-none">{item.title}</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-xl leading-relaxed font-medium max-w-2xl">{item.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* --- CTA --- */}
-      <section className="py-40 px-6 text-center">
-        <motion.div {...fadeInUp}>
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-            className="inline-block mb-8"
-          >
-            <Repeat size={48} className="text-blue-600" />
-          </motion.div>
-          <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-black dark:text-white uppercase mb-8">
-            Close the loop.
+      {/* --- CTA SECTION (Cinematic Redesign) --- */}
+      <section className="py-72 px-6 relative overflow-hidden bg-white dark:bg-black text-black dark:text-white text-center">
+        {/* Cinematic Backdrop */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 dark:bg-blue-600/20 blur-[150px] opacity-40 animate-pulse" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_0%,white_85%)] dark:bg-[radial-gradient(circle_at_50%_50%,transparent_0%,black_85%)]" />
+          
+          {/* Technical Grid Overlay */}
+          <div className="absolute inset-0 opacity-[0.05] pointer-events-none" 
+               style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+        </div>
+
+        {/* Floating Decorative Elements */}
+        <div className="absolute inset-0 pointer-events-none">
+          {[...Array(3)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-32 bg-blue-600/10 dark:bg-blue-600/20 rounded-full"
+              style={{ 
+                left: `${20 + i * 30}%`, 
+                top: `${10 + i * 20}%`,
+                rotate: i * 45
+              }}
+              animate={{ 
+                y: [0, -40, 0],
+                opacity: [0.1, 0.3, 0.1]
+              }}
+              transition={{ 
+                duration: 5 + i, 
+                repeat: Infinity, 
+                ease: "easeInOut" 
+              }}
+            />
+          ))}
+        </div>
+
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.98 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          className="relative z-10 max-w-6xl mx-auto"
+        >
+          {/* Technical SVG Ring */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 pointer-events-none">
+            <motion.svg 
+              width="800" 
+              height="800" 
+              viewBox="0 0 100 100" 
+              className="opacity-[0.1] dark:opacity-[0.05]"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+            >
+              <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" strokeWidth="0.05" strokeDasharray="1 2" />
+              <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="0.02" opacity="0.5" />
+            </motion.svg>
+          </div>
+
+          <h2 className="text-5xl md:text-7xl font-black tracking-tighter uppercase mb-24 leading-[0.8] selection:bg-blue-600/30">
+            Close <br />
+            <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-600 to-blue-800 animate-gradient">The Loop.</span>
           </h2>
-          <p className="text-gray-500 dark:text-gray-400 text-lg font-medium mb-12">
-            The best time to start learning was yesterday. The second best time is today.
-          </p>
-          <Link
-            to={isAuthenticated ? "/dashboard" : "/login"}
-            className="inline-flex items-center gap-3 px-10 py-5 bg-black dark:bg-white text-white dark:text-black rounded-full font-black text-xs uppercase tracking-widest hover:scale-105 transition-all no-underline shadow-2xl"
-          >
-            {isAuthenticated ? "Go to Dashboard" : "Start Your First Briefing"}
-          </Link>
+          
+          <div className="flex justify-center group/cta">
+            <Link
+              to={isAuthenticated ? "/todays" : "/login"}
+              className="relative px-20 py-8 bg-black dark:bg-white text-white dark:text-black rounded-full font-black text-xs uppercase tracking-[0.5em] hover:scale-105 transition-all duration-500 no-underline overflow-hidden border border-black/20 dark:border-white/20"
+            >
+              <span className="relative z-10 transition-colors duration-500">
+                {isAuthenticated ? "Enter Command Center" : "Initialize Briefing"}
+              </span>
+              <motion.div 
+                className="absolute inset-0 bg-blue-600 opacity-0 group-hover/cta:opacity-100 transition-opacity duration-500"
+                initial={false}
+              />
+            </Link>
+          </div>
         </motion.div>
+
+        <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+          }
+          .animate-gradient {
+            background-size: 200% 200%;
+            animation: gradient 8s ease infinite;
+          }
+        `}} />
       </section>
 
       <Footer />
