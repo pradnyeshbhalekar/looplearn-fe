@@ -221,7 +221,7 @@ const Home = () => {
             className="flex justify-center gap-8 sm:gap-12 mt-10 sm:mt-14 pt-8 sm:pt-10 border-t border-gray-100 dark:border-white/5 w-full"
           >
             <Stat value="1"    label="Topic Daily" />
-            <Stat value="5min" label="Deep Read"   />
+            <Stat value="5 min" label="Deep Read"   />
             <Stat value="∞"    label="Retention"   />
           </motion.div>
         </motion.div>
