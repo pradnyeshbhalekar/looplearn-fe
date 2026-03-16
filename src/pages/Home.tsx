@@ -1,63 +1,53 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { motion, useScroll, useSpring } from "framer-motion"; // For scroll animations
+import { motion, useScroll, useSpring, useInView } from "framer-motion";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
-import {
-  ArrowRight,
-} from "lucide-react";
+import { ArrowRight, Users, Headphones, Zap, AlignLeft, Network } from "lucide-react";
 
-// Animation Variants
-const fadeInUp = {
-  initial: { opacity: 0, y: 30 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true },
-  transition: { duration: 0.6, ease: "easeOut" as any }
-};
-
-const TypingText = ({ phrases, className = "" }: { phrases: { text: string, className?: string }[], className?: string }) => {
-  const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
-  const [displayedText, setDisplayedText] = useState("");
-  const [complete, setComplete] = useState(false);
+/* ─────────────────────────────────────────────
+   TYPING TEXT
+───────────────────────────────────────────── */
+const TypingText = ({
+  phrases,
+}: {
+  phrases: { text: string; className?: string }[];
+}) => {
+  const [phraseIdx, setPhraseIdx] = useState(0);
+  const [displayed, setDisplayed] = useState("");
+  const [done, setDone] = useState(false);
 
   useEffect(() => {
-    let timeout: any;
-    const currentPhrase = phrases[currentPhraseIndex];
-
-    if (!currentPhrase) {
-      setComplete(true);
-      return;
-    }
-
-    if (displayedText.length < currentPhrase.text.length) {
-      timeout = setTimeout(() => {
-        setDisplayedText(currentPhrase.text.slice(0, displayedText.length + 1));
-      }, 70);
-    } else if (currentPhraseIndex < phrases.length - 1) {
-      // Move to next phrase after a short pause
-      timeout = setTimeout(() => {
-        setCurrentPhraseIndex(prev => prev + 1);
-        setDisplayedText("");
-      }, 500);
+    let t: ReturnType<typeof setTimeout>;
+    const cur = phrases[phraseIdx];
+    if (!cur) { setDone(true); return; }
+    if (displayed.length < cur.text.length) {
+      t = setTimeout(() => setDisplayed(cur.text.slice(0, displayed.length + 1)), 65);
+    } else if (phraseIdx < phrases.length - 1) {
+      t = setTimeout(() => { setPhraseIdx((p) => p + 1); setDisplayed(""); }, 500);
     } else {
-      setComplete(true);
+      setDone(true);
     }
-
-    return () => clearTimeout(timeout);
-  }, [displayedText, currentPhraseIndex, phrases]);
+    return () => clearTimeout(t);
+  }, [displayed, phraseIdx, phrases]);
 
   return (
-    <div className={className}>
+    <div>
       {phrases.map((phrase, idx) => (
-        <div key={idx} className="min-h-[1.2em] flex items-center justify-start md:justify-center">
+        <div key={idx} className="min-h-[1.1em] flex items-center justify-center">
           <span className={phrase.className || ""}>
-            {idx < currentPhraseIndex ? phrase.text : idx === currentPhraseIndex ? displayedText : ""}
-            {idx === currentPhraseIndex && (
+            {idx < phraseIdx ? phrase.text : idx === phraseIdx ? displayed : ""}
+            {idx === phraseIdx && (
               <motion.span
                 animate={{ opacity: [1, 0] }}
                 transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-                className="inline-block w-[4px] h-[0.9em] bg-blue-600 ml-1 translate-y-1"
-                style={{ display: complete && idx === phrases.length - 1 ? "inline-block" : !complete && idx === currentPhraseIndex ? "inline-block" : "none" }}
+                className="inline-block w-[3px] h-[0.85em] bg-blue-500 ml-1 translate-y-[2px]"
+                style={{
+                  display:
+                    (done && idx === phrases.length - 1) || (!done && idx === phraseIdx)
+                      ? "inline-block"
+                      : "none",
+                }}
               />
             )}
           </span>
@@ -67,267 +57,382 @@ const TypingText = ({ phrases, className = "" }: { phrases: { text: string, clas
   );
 };
 
+/* ─────────────────────────────────────────────
+   REVEAL WRAPPER
+───────────────────────────────────────────── */
+const Reveal = ({
+  children,
+  delay = 0,
+  className = "",
+  from = "bottom",
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  className?: string;
+  from?: "bottom" | "left" | "right";
+}) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-60px 0px" });
+  const initial = {
+    bottom: { opacity: 0, y: 40 },
+    left:   { opacity: 0, x: -40 },
+    right:  { opacity: 0, x: 40 },
+  }[from];
+  const animate = inView ? { opacity: 1, y: 0, x: 0 } : {};
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      initial={initial}
+      animate={animate}
+      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+/* ─────────────────────────────────────────────
+   MARQUEE STRIP
+───────────────────────────────────────────── */
+const marqueeItems = [
+  "System Design", "Distributed Systems", "Database Internals",
+  "Cloud Infrastructure", "Kubernetes", "Zero Trust Security",
+  "Event-Driven Architecture", "Service Mesh", "DevSecOps",
+];
+
+const Marquee = () => (
+  <div className="overflow-hidden py-4 border-y border-gray-100 dark:border-white/5 bg-gray-50/80 dark:bg-[#080808]">
+    <motion.div
+      className="flex gap-12 whitespace-nowrap"
+      animate={{ x: ["0%", "-50%"] }}
+      transition={{ duration: 30, ease: "linear", repeat: Infinity }}
+      style={{ width: "max-content" }}
+    >
+      {[...marqueeItems, ...marqueeItems].map((item, i) => (
+        <span key={i} className="text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-gray-600 flex items-center gap-3">
+          <span className="w-1 h-1 rounded-full bg-blue-500 inline-block flex-shrink-0" />
+          {item}
+        </span>
+      ))}
+    </motion.div>
+  </div>
+);
+
+/* ─────────────────────────────────────────────
+   COUNTER STAT
+───────────────────────────────────────────── */
+const Stat = ({ value, label }: { value: string; label: string }) => (
+  <div className="flex flex-col items-center gap-1">
+    <span className="text-2xl sm:text-3xl font-black text-black dark:text-white tabular-nums">{value}</span>
+    <span className="text-[10px] font-mono uppercase tracking-widest text-gray-400">{label}</span>
+  </div>
+);
+
+/* ─────────────────────────────────────────────
+   HOME PAGE
+───────────────────────────────────────────── */
 const Home = () => {
   const token = localStorage.getItem("token");
   const isAuthenticated = !!token;
 
-  // Reading progress bar logic
   const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001
-  });
+  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
+
+  // audience items
+  const audiences = [
+    { title: "Architects", desc: "For those who need to understand the 'why' before the 'how'. We map mental models to production reality.", code: "PROF 01" },
+    { title: "Senior Engineers", desc: "Skip the basics. We go deep on internals, performance trade-offs, and system constraints.", code: "PROF 02" },
+    { title: "Full Stack", desc: "Bridge the gap between infrastructure and application. 5 minutes total daily commitment.", code: "PROF 03" },
+  ];
+
+  // protocol steps
+  const steps = [
+    { icon: AlignLeft,  title: "Distilled Briefing",         desc: "No fluff. High-signal technical extraction that respects your flow state. We optimize for the first 300 seconds of your day." },
+    { icon: Network,    title: "Structural Blueprint",        desc: "Architecture mapping. Spatially visualize the concept to anchor the mental model permanently." },
+    { icon: Zap,        title: "Implementation Vector",       desc: "Direct production implementation. We provide the 'how' through high-fidelity case studies and walkthroughs." },
+  ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black transition-colors duration-500 scroll-smooth selection:bg-blue-500/30 font-sans">
-      {/* Subtle Grain Overlay */}
-      <div className="fixed inset-0 z-[120] pointer-events-none opacity-[0.03] dark:opacity-[0.05] contrast-150 brightness-150" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }}></div>
+    <div className="min-h-screen bg-white dark:bg-black transition-colors duration-500 scroll-smooth selection:bg-blue-500/30 font-sans overflow-x-hidden">
 
-      {/* Scroll Progress Bar */}
-      <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-blue-600 z-[110] origin-left"
-        style={{ scaleX }}
+      {/* Grain */}
+      <div
+        className="fixed inset-0 z-[120] pointer-events-none opacity-[0.025] dark:opacity-[0.045]"
+        style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }}
       />
+
+      {/* Scroll bar */}
+      <motion.div className="fixed top-0 left-0 right-0 h-[2px] bg-blue-600 z-[110] origin-left" style={{ scaleX }} />
 
       <Navbar />
 
-      {/* --- HERO SECTION --- */}
-      <section className="relative pt-64 pb-32 px-6 flex flex-col items-center justify-center overflow-hidden">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="max-w-7xl mx-auto flex flex-col items-center relative z-10 w-full"
-        >
-          <div className="w-full max-w-5xl">
-            <h1 className="text-5xl md:text-[6rem] font-black leading-[1.1] tracking-[-0.05em] text-black dark:text-white mb-10 min-h-[2.5em]">
-              <TypingText 
-                phrases={[
-                  { text: "One topic a day." },
-                  { text: "Mastered.", className: "text-blue-600 italic" }
-                ]} 
-              />
-            </h1>
-          </div>
+      {/* ───────────── HERO ───────────── */}
+      <section className="relative pt-28 sm:pt-36 md:pt-48 pb-12 sm:pb-20 px-5 sm:px-6 overflow-hidden min-h-[90svh] flex flex-col justify-center">
+        <div
+          className="absolute inset-0 opacity-[0.025] dark:opacity-[0.05] pointer-events-none"
+          style={{ backgroundImage: "linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)", backgroundSize: "60px 60px" }}
+        />
 
-          <p className="max-w-2xl mx-auto text-center text-xl md:text-2xl text-gray-400 dark:text-gray-500 font-semibold leading-relaxed mb-16 tracking-tight">
-            LoopLearn delivers a single, high-signal technical briefing every 24 hours. 
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-6xl mx-auto relative z-10 w-full flex flex-col items-center text-center"
+        >
+          {/* Headline */}
+          <h1 className="text-[clamp(3rem,11vw,7.5rem)] font-black leading-[1.0] tracking-[-0.04em] text-black dark:text-white mb-5 sm:mb-8 w-full">
+            <TypingText
+              phrases={[
+                { text: "One topic a day." },
+                { text: "Mastered.", className: "text-blue-600 italic" },
+              ]}
+            />
+          </h1>
+
+          <p className="max-w-lg text-base sm:text-lg text-gray-500 dark:text-gray-400 font-semibold leading-relaxed tracking-tight mb-8 sm:mb-10 mx-auto">
+            LoopLearn delivers a single, high-signal technical briefing every 24 hours.
             Built for engineering minds who value depth over volume.
           </p>
-          
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
             <Link
               to={isAuthenticated ? "/todays" : "/login"}
-              className="group relative flex items-center gap-4 px-12 py-5 bg-black dark:bg-white text-white dark:text-black rounded-full font-black text-xs uppercase tracking-widest hover:scale-105 transition-all no-underline shadow-2xl"
+              className="group relative flex items-center justify-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-[1.03] active:scale-[0.97] transition-all duration-300 no-underline shadow-xl shadow-black/15 dark:shadow-white/10 overflow-hidden"
             >
-              {isAuthenticated ? "Enter Command Center" : "Access Briefing"}
-              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              <span className="relative z-10">{isAuthenticated ? "Enter Command Center" : "Access Briefing"}</span>
+              <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform relative z-10" />
+              <motion.div className="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" initial={false} />
             </Link>
             <a
               href="#how"
-              className="px-10 py-5 border border-gray-200 dark:border-gray-800 text-black dark:text-white rounded-full font-black text-xs uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-white/5 transition-all no-underline"
+              className="flex items-center justify-center px-8 py-4 border border-gray-200 dark:border-gray-700 text-black dark:text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-white/5 active:scale-[0.97] transition-all no-underline"
             >
               Methodology
             </a>
           </div>
+
+          {/* Stats */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7, duration: 0.6 }}
+            className="flex justify-center gap-8 sm:gap-12 mt-10 sm:mt-14 pt-8 sm:pt-10 border-t border-gray-100 dark:border-white/5 w-full"
+          >
+            <Stat value="1"    label="Topic Daily" />
+            <Stat value="5min" label="Deep Read"   />
+            <Stat value="∞"    label="Retention"   />
+          </motion.div>
         </motion.div>
       </section>
 
-      {/* --- PROBLEM / SOLUTION --- */}
-      <section id="why" className="py-32 px-6 relative border-y border-gray-100 dark:border-white/5 bg-[#fafafa] dark:bg-black overflow-hidden">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-20 relative z-10">
-          <motion.div {...fadeInUp} className="space-y-8">
-            <div className="w-12 h-1 bg-red-500/30" />
-            <h2 className="text-4xl font-black tracking-tighter text-black dark:text-white uppercase leading-none">The Noise.</h2>
-            <p className="text-gray-500 dark:text-gray-400 text-xl leading-relaxed font-medium tracking-tight">
-              Tutorial hell is a symptom of information overflow. Most platforms optimize for watch-time. We optimize for high-signal technical retention.
-            </p>
-          </motion.div>
-          
-          <motion.div {...fadeInUp} transition={{ delay: 0.2 }} className="space-y-8">
-            <div className="w-12 h-1 bg-blue-600" />
-            <h2 className="text-4xl font-black tracking-tighter text-black dark:text-white uppercase leading-none">The Signal.</h2>
-            <p className="text-gray-500 dark:text-gray-400 text-xl leading-relaxed font-medium tracking-tight">
-              One structured entry point daily. No backlogs. Just one core concept, one visual blueprint, and one high-fidelity implementation guide.
-            </p>
-          </motion.div>
+      {/* ───────────── MARQUEE ───────────── */}
+      <Marquee />
+
+      {/* ───────────── NOISE / SIGNAL ───────────── */}
+      <section id="why" className="py-16 sm:py-28 px-5 sm:px-6 bg-white dark:bg-black">
+        <div className="max-w-6xl mx-auto">
+          {/* Section label */}
+          <Reveal className="mb-10 sm:mb-16">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-gray-400">The Problem</span>
+          </Reveal>
+
+          <div className="grid sm:grid-cols-2 gap-5 sm:gap-8">
+            {/* The Noise */}
+            <Reveal delay={0} from="left">
+              <div className="relative group rounded-2xl sm:rounded-3xl border border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-[#0d0d0d] p-7 sm:p-10 overflow-hidden h-full">
+                <div className="w-10 h-[2px] bg-red-400/60 mb-6" />
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter text-black dark:text-white uppercase mb-4">The Noise.</h2>
+                <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base leading-relaxed font-medium">
+                  Tutorial hell is a symptom of information overflow. Most platforms optimize for watch-time. We optimize for high-signal technical retention.
+                </p>
+                <div className="mt-8 flex flex-wrap gap-2">
+                  {["Infinite courses", "Zero retention", "Tutorial hell"].map((t) => (
+                    <span key={t} className="px-3 py-1 rounded-full bg-red-500/5 border border-red-500/10 text-[10px] font-mono uppercase tracking-widest text-red-400">{t}</span>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
+
+            {/* The Signal */}
+            <Reveal delay={0.12} from="right">
+              <div className="relative group rounded-2xl sm:rounded-3xl border border-blue-500/20 bg-blue-600/[0.03] dark:bg-blue-600/[0.05] p-7 sm:p-10 overflow-hidden h-full">
+                <div className="w-10 h-[2px] bg-blue-600 mb-6" />
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter text-black dark:text-white uppercase mb-4">The Signal.</h2>
+                <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base leading-relaxed font-medium">
+                  One structured entry point daily. No backlogs. Just one core concept, one visual blueprint, and one high-fidelity implementation guide.
+                </p>
+                <div className="mt-8 flex flex-wrap gap-2">
+                  {["One topic", "Deep mastery", "No backlog"].map((t) => (
+                    <span key={t} className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] font-mono uppercase tracking-widest text-blue-600">{t}</span>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
+          </div>
         </div>
       </section>
 
-      {/* --- CORE FEATURES --- */}
-      <section className="py-24 px-6 border-b border-gray-100 dark:border-white/5 bg-white dark:bg-black">
-        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12">
-          <motion.div {...fadeInUp} className="p-12 rounded-[2.5rem] bg-gray-50 dark:bg-zinc-950 border border-gray-100 dark:border-white/5">
-            <span className="text-[10px] font-mono text-blue-600 uppercase tracking-widest mb-6 block">TEAM INFRASTRUCTURE</span>
-            <h3 className="text-3xl font-black uppercase tracking-tight text-black dark:text-white mb-6">Team Workspaces</h3>
-            <p className="text-gray-500 dark:text-gray-400 text-lg leading-relaxed font-medium">
-              Onboard your junior developers with high-yield seat packs. As a senior engineer, oversee their daily loops and ensure your team is mastering the stack at scale.
-            </p>
-          </motion.div>
- 
-          <motion.div {...fadeInUp} transition={{ delay: 0.2 }} className="p-12 rounded-[2.5rem] bg-gray-50 dark:bg-zinc-950 border border-gray-100 dark:border-white/5">
-            <span className="text-[10px] font-mono text-blue-600 uppercase tracking-widest mb-6 block">NEURAL SYNTHESIS</span>
-            <h3 className="text-3xl font-black uppercase tracking-tight text-black dark:text-white mb-6">Commuter Mode</h3>
-            <p className="text-gray-500 dark:text-gray-400 text-lg leading-relaxed font-medium">
-              High-quality neural audio synthesis. Listen to the daily briefing in Commuter Mode—anywhere, any device, with seamless state persistence.
-            </p>
-          </motion.div>
+      {/* ───────────── CORE FEATURES ───────────── */}
+      <section className="py-16 sm:py-28 px-5 sm:px-6 border-y border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-[#080808]">
+        <div className="max-w-6xl mx-auto">
+          <Reveal className="mb-10 sm:mb-16">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-gray-400">What You Get</span>
+          </Reveal>
+
+          <div className="grid sm:grid-cols-2 gap-5 sm:gap-8">
+            {/* Workspaces */}
+            <Reveal delay={0}>
+              <div className="group relative rounded-2xl sm:rounded-3xl bg-white dark:bg-zinc-950 border border-gray-100 dark:border-white/5 p-7 sm:p-10 hover:border-blue-500/30 dark:hover:border-blue-500/20 hover:-translate-y-1 hover:shadow-2xl transition-all duration-500 overflow-hidden">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center mb-6">
+                  <Users size={18} className="text-blue-600" />
+                </div>
+                <span className="text-[9px] font-mono uppercase tracking-widest text-blue-600 mb-3 block">Team Infrastructure</span>
+                <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black dark:text-white mb-4">Team Workspaces</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base leading-relaxed font-medium">
+                  Onboard your junior developers with high-yield seat packs. As a senior engineer, oversee their daily loops and ensure your team is mastering the stack at scale.
+                </p>
+              </div>
+            </Reveal>
+
+            {/* Commuter Mode */}
+            <Reveal delay={0.1}>
+              <div className="group relative rounded-2xl sm:rounded-3xl bg-white dark:bg-zinc-950 border border-gray-100 dark:border-white/5 p-7 sm:p-10 hover:border-blue-500/30 dark:hover:border-blue-500/20 hover:-translate-y-1 hover:shadow-2xl transition-all duration-500 overflow-hidden">
+                <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center mb-6">
+                  <Headphones size={18} className="text-violet-600" />
+                </div>
+                <span className="text-[9px] font-mono uppercase tracking-widest text-violet-600 mb-3 block">Neural Synthesis</span>
+                <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black dark:text-white mb-4">Commuter Mode</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base leading-relaxed font-medium">
+                  High-quality neural audio synthesis. Listen to the daily briefing in Commuter Mode—anywhere, any device, with seamless state persistence.
+                </p>
+              </div>
+            </Reveal>
+          </div>
         </div>
       </section>
 
-      {/* --- TARGET AUDIENCE --- */}
-      <section id="who" className="py-44 px-6 relative bg-white dark:bg-black">
-        <div className="max-w-7xl mx-auto">
-          <motion.div {...fadeInUp} className="mb-32">
-            <h2 className="text-5xl md:text-8xl font-black tracking-tighter text-black dark:text-white uppercase leading-[0.85]">
+      {/* ───────────── WHO IS IT FOR ───────────── */}
+      <section id="who" className="py-16 sm:py-32 px-5 sm:px-6 bg-white dark:bg-black overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <Reveal className="mb-12 sm:mb-20">
+            <h2 className="text-[clamp(2.6rem,8vw,6rem)] font-black tracking-tighter text-black dark:text-white uppercase leading-[0.88]">
               Built for the <br />
-              <span className="text-gray-300 dark:text-white/20 italic">Deep thinkers.</span>
+              <span className="text-gray-200 dark:text-white/10 italic">Deep thinkers.</span>
             </h2>
-          </motion.div>
+          </Reveal>
 
-          <div className="grid md:grid-cols-3 gap-12">
-            {[
-              { title: "Architects", desc: "For those who need to understand the 'why' before the 'how'. We map mental models to production reality." },
-              { title: "Senior Engineers", desc: "Skip the basics. We go deep on internals, performance trade-offs, and system constraints." },
-              { title: "Full Stack", desc: "Bridge the gap between infrastructure and application. 5 minutes total daily commitment." },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                {...fadeInUp}
-                transition={{ delay: i * 0.1 }}
-                className="group border-t border-gray-100 dark:border-white/10 pt-10"
-              >
-                <span className="text-blue-600 font-mono text-xs mb-6 block">PROF 0{i + 1}</span>
-                <h3 className="text-3xl font-black uppercase tracking-tight text-black dark:text-white mb-6 leading-tight group-hover:text-blue-600 transition-colors">{item.title}</h3>
-                <p className="text-gray-500 dark:text-gray-400 text-lg leading-relaxed font-medium opacity-80">{item.desc}</p>
-              </motion.div>
+          {/* Audience cards — stacked on mobile, horizontal on desktop */}
+          <div className="flex flex-col sm:grid sm:grid-cols-3 gap-4 sm:gap-0 sm:divide-x divide-gray-100 dark:divide-white/5">
+            {audiences.map((item, i) => (
+              <Reveal key={i} delay={i * 0.1} className="sm:px-8 first:pl-0 last:pr-0 group">
+                <div className="sm:border-0 border border-gray-100 dark:border-white/5 rounded-2xl sm:rounded-none p-6 sm:p-0 sm:pt-8">
+                  <span className="text-[9px] font-mono uppercase tracking-widest text-blue-600 mb-4 block">{item.code}</span>
+                  <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black dark:text-white mb-3 leading-tight group-hover:text-blue-600 transition-colors duration-300">
+                    {item.title}
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base leading-relaxed font-medium">{item.desc}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* --- PROTOCOL (Methodology) --- */}
-      <section id="how" className="py-44 px-6 bg-gray-50 dark:bg-black text-black dark:text-white selection:bg-black selection:text-white">
-        <div className="max-w-4xl mx-auto">
-          <motion.div {...fadeInUp} className="mb-32">
-             <h2 className="text-5xl md:text-8xl font-black tracking-tighter uppercase mb-6 leading-none">The Protocol.</h2>
-             <p className="text-gray-500 font-bold uppercase tracking-[0.4em] text-xs">Standardized Learning Flow</p>
-          </motion.div>
+      {/* ───────────── PROTOCOL ───────────── */}
+      <section id="how" className="py-16 sm:py-36 px-5 sm:px-6 bg-white dark:bg-black text-black dark:text-white overflow-hidden transition-colors duration-500">
+        <div className="max-w-5xl mx-auto">
+          <Reveal className="mb-12 sm:mb-20">
+            <div className="flex items-start gap-4 sm:gap-6">
+              <div>
+                <span className="text-[9px] font-mono uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-3 block">Standardized Learning Flow</span>
+                <h2 className="text-[clamp(2.6rem,8vw,6rem)] font-black tracking-tighter uppercase leading-none">The Protocol.</h2>
+              </div>
+            </div>
+          </Reveal>
 
-          <div className="space-y-40 relative">
-            {[
-              { title: "Distilled Briefing", desc: "No fluff. High-signal technical extraction that respects your flow state. We optimize for the first 300 seconds of your day." },
-              { title: "Structural Blueprint", desc: "Architecture mapping. Spatially visualize the concept to anchor the mental model permanently." },
-              { title: "Implementation Vector", desc: "Direct production implementation. We provide the 'how' through high-fidelity case studies and walkthroughs." },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: i * 0.1 }}
-                className="relative group"
-              >
-                <div className="mb-4 text-blue-600 font-mono text-xs tracking-widest">STEP 0{i + 1}</div>
-                <h3 className="text-4xl md:text-6xl font-black uppercase tracking-tight mb-8 leading-none">{item.title}</h3>
-                <p className="text-gray-500 dark:text-gray-400 text-xl leading-relaxed font-medium max-w-2xl">{item.desc}</p>
-              </motion.div>
-            ))}
+          <div className="relative">
+            {/* Vertical track line — desktop only */}
+            <div className="hidden sm:block absolute left-4 top-3 bottom-12 w-px bg-gray-100 dark:bg-white/5" />
+
+            <div className="space-y-8 sm:space-y-0">
+              {steps.map((item, i) => {
+                const Icon = item.icon;
+                return (
+                  <Reveal key={i} delay={i * 0.1}>
+                    <div className="sm:grid sm:grid-cols-[auto_1fr] sm:gap-x-10 sm:gap-y-0 group sm:py-10 border-b border-gray-100 dark:border-white/5 last:border-0">
+                      {/* Step indicator */}
+                      <div className="flex items-start gap-4 sm:block sm:pt-1">
+                        <div className="w-9 h-9 rounded-full border border-gray-200 dark:border-white/10 flex items-center justify-center flex-shrink-0 group-hover:border-blue-500/50 group-hover:bg-blue-500/10 transition-all duration-300">
+                          <Icon size={14} className="text-blue-600 dark:text-blue-400" />
+                        </div>
+                        {/* Mobile inline content */}
+                        <div className="sm:hidden flex-1">
+                          <span className="text-[9px] font-mono uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-2 block">Step 0{i + 1}</span>
+                          <h3 className="text-xl font-black uppercase tracking-tight mb-2 leading-tight">{item.title}</h3>
+                          <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{item.desc}</p>
+                        </div>
+                      </div>
+                      {/* Desktop content */}
+                      <div className="hidden sm:block">
+                        <span className="text-[9px] font-mono uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-3 block">Step 0{i + 1}</span>
+                        <h3 className="text-3xl sm:text-4xl font-black uppercase tracking-tight mb-4 leading-none group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
+                          {item.title}
+                        </h3>
+                        <p className="text-gray-500 dark:text-gray-400 text-lg leading-relaxed max-w-xl">{item.desc}</p>
+                      </div>
+                    </div>
+                  </Reveal>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* --- CTA SECTION (Cinematic Redesign) --- */}
-      <section className="py-72 px-6 relative overflow-hidden bg-white dark:bg-black text-black dark:text-white text-center">
-        {/* Cinematic Backdrop */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 dark:bg-blue-600/20 blur-[150px] opacity-40 animate-pulse" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_0%,white_85%)] dark:bg-[radial-gradient(circle_at_50%_50%,transparent_0%,black_85%)]" />
-          
-          {/* Technical Grid Overlay */}
-          <div className="absolute inset-0 opacity-[0.05] pointer-events-none" 
-               style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
-        </div>
+      {/* ───────────── CTA ───────────── */}
+      <section className="relative py-24 sm:py-40 px-5 sm:px-6 bg-white dark:bg-black text-black dark:text-white text-center overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-[0.025] dark:opacity-[0.05]"
+          style={{ backgroundImage: "linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)", backgroundSize: "60px 60px" }}
+        />
 
-        {/* Floating Decorative Elements */}
-        <div className="absolute inset-0 pointer-events-none">
-          {[...Array(3)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-32 bg-blue-600/10 dark:bg-blue-600/20 rounded-full"
-              style={{ 
-                left: `${20 + i * 30}%`, 
-                top: `${10 + i * 20}%`,
-                rotate: i * 45
-              }}
-              animate={{ 
-                y: [0, -40, 0],
-                opacity: [0.1, 0.3, 0.1]
-              }}
-              transition={{ 
-                duration: 5 + i, 
-                repeat: Infinity, 
-                ease: "easeInOut" 
-              }}
-            />
-          ))}
-        </div>
+        {/* Drifting lines */}
+        {[0, 1, 2].map((i) => (
+          <motion.div
+            key={i}
+            className="absolute w-px sm:w-[1px] h-24 sm:h-36 bg-blue-600/15 rounded-full pointer-events-none"
+            style={{ left: `${22 + i * 28}%`, top: `${12 + i * 18}%`, rotate: i * 40 }}
+            animate={{ y: [0, -35, 0], opacity: [0.08, 0.25, 0.08] }}
+            transition={{ duration: 6 + i * 1.5, repeat: Infinity, ease: "easeInOut" }}
+          />
+        ))}
 
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.98 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-10 max-w-6xl mx-auto"
-        >
-          {/* Technical SVG Ring */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 pointer-events-none">
-            <motion.svg 
-              width="800" 
-              height="800" 
-              viewBox="0 0 100 100" 
-              className="opacity-[0.1] dark:opacity-[0.05]"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+        <Reveal className="relative z-10 max-w-5xl mx-auto">
+          <h2 className="text-[clamp(3rem,10vw,7rem)] font-black tracking-tighter uppercase mb-8 sm:mb-12 leading-[0.88]">
+            Close{" "}
+            <span
+              className="italic text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-600 to-blue-800"
+              style={{ backgroundSize: "200% 200%", animation: "gradient 8s ease infinite" }}
             >
-              <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" strokeWidth="0.05" strokeDasharray="1 2" />
-              <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="0.02" opacity="0.5" />
-            </motion.svg>
-          </div>
-
-          <h2 className="text-5xl md:text-7xl font-black tracking-tighter uppercase mb-24 leading-[0.8] selection:bg-blue-600/30">
-            Close <br />
-            <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-600 to-blue-800 animate-gradient">The Loop.</span>
+              The Loop.
+            </span>
           </h2>
-          
-          <div className="flex justify-center group/cta">
-            <Link
-              to={isAuthenticated ? "/todays" : "/login"}
-              className="relative px-20 py-8 bg-black dark:bg-white text-white dark:text-black rounded-full font-black text-xs uppercase tracking-[0.5em] hover:scale-105 transition-all duration-500 no-underline overflow-hidden border border-black/20 dark:border-white/20"
-            >
-              <span className="relative z-10 transition-colors duration-500">
-                {isAuthenticated ? "Enter Command Center" : "Initialize Briefing"}
-              </span>
-              <motion.div 
-                className="absolute inset-0 bg-blue-600 opacity-0 group-hover/cta:opacity-100 transition-opacity duration-500"
-                initial={false}
-              />
-            </Link>
-          </div>
-        </motion.div>
 
-        <style dangerouslySetInnerHTML={{ __html: `
-          @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-          }
-          .animate-gradient {
-            background-size: 200% 200%;
-            animation: gradient 8s ease infinite;
-          }
-        `}} />
+          <Link
+            to={isAuthenticated ? "/todays" : "/login"}
+            className="group inline-flex items-center gap-3 px-10 sm:px-16 py-4 sm:py-5 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black text-xs uppercase tracking-[0.3em] sm:tracking-[0.4em] hover:scale-[1.04] active:scale-[0.97] transition-all duration-400 no-underline overflow-hidden relative"
+          >
+            <span className="relative z-10">{isAuthenticated ? "Enter Command Center" : "Initialize Briefing"}</span>
+            <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform relative z-10" />
+            <motion.div className="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-400" initial={false} />
+          </Link>
+        </Reveal>
+
+        <style dangerouslySetInnerHTML={{
+          __html: `@keyframes gradient{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}`
+        }} />
       </section>
 
       <Footer />
