@@ -40,10 +40,24 @@ export interface Article {
     child_topics?: any[];
 }
 
+export interface UserSubscription {
+    subscription_id: number;
+    status: string;
+    ends_at: string | null;
+    plan_id: number;
+    plan_name: string;
+    domain: string;
+    razorpay_subscription_id: string | null;
+}
+
 export const subscriptionApi = {
     getPlans: async () => {
         const response = await api.get<Plan[]>("/api/subscriptions/plans");
         return response.data;
+    },
+    listMySubscriptions: async () => {
+        const response = await api.get<{ subscriptions: UserSubscription[] }>("/api/subscriptions/me/list");
+        return response.data.subscriptions;
     },
     subscribe: async (planId: string, workspaceId?: string) => {
         const response = await api.post<Subscription>("/api/subscriptions/subscribe", {
