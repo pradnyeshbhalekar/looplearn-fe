@@ -16,46 +16,69 @@ const ExplanationPopover: React.FC<ExplanationPopoverProps> = ({
   loading,
   position,
 }) => {
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   if (!isOpen) return null;
 
-  return (
-    <div
-      style={{
-        position: "fixed",
+  const style = isMobile 
+    ? {
+        position: "fixed" as const,
+        top: position.top,
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 100,
+      }
+    : {
+        position: "fixed" as const,
         top: position.top,
         left: position.left,
         transform: "translateX(-50%) translateY(-100%) translateY(-10px)",
         zIndex: 60,
-      }}
-      className="explanation-popover w-[450px] bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl p-3 px-5 animate-in fade-in zoom-in-95 duration-200"
+      };
+
+  return (
+    <div
+      style={style}
+      className={`explanation-popover bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl p-4 px-6 animate-in fade-in zoom-in-95 duration-200 ${
+        isMobile ? 'w-[calc(100%-2rem)] max-w-sm' : 'w-[450px]'
+      }`}
     >
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-1.5">
-          <Sparkles size={12} className="text-blue-600" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Tutor</span>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Sparkles size={16} className="text-blue-600 animate-pulse" />
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">AI Tutor Analysis</span>
         </div>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
-          <X size={14} />
+        <button onClick={onClose} className="p-1 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+          <X size={18} />
         </button>
       </div>
 
-      <div className="min-h-[40px]">
+      <div className="min-h-[60px] max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
         {loading ? (
-          <div className="flex items-center gap-3 py-1">
-            <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Studying...</span>
+          <div className="flex flex-col items-center justify-center py-6 gap-3">
+            <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 animate-pulse">Synthesizing Context</span>
           </div>
         ) : (
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 leading-relaxed">
+          <p className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300 leading-relaxed">
             {explanation || "Processing..."}
           </p>
         )}
       </div>
       
-      {/* Arrow Down */}
-      <div 
-        className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-[#111] border-r border-b border-gray-200 dark:border-gray-800 rotate-45"
-      />
+      {/* Arrow - Only on Desktop */}
+      {!isMobile && (
+        <div 
+          className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-[#111] border-r border-b border-gray-200 dark:border-gray-800 rotate-45"
+        />
+      )}
     </div>
   );
 };

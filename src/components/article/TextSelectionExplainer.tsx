@@ -55,8 +55,12 @@ const TextSelectionExplainer: React.FC = () => {
 
           setSelectedText(text);
           setContext(contextText);
+          
+          // Position: Above on desktop, Below on mobile
+          const topPos = isMobile ? rect.bottom + 10 : rect.top - 45;
+          
           setButtonPosition({
-            top: rect.top - 45,
+            top: topPos,
             left: rect.left + rect.width / 2,
           });
         }
@@ -116,20 +120,14 @@ const TextSelectionExplainer: React.FC = () => {
       {buttonPosition && (
         <div
           ref={explainerRef}
-          style={isMobile ? {
-            position: "fixed",
-            bottom: "40px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 100,
-          } : {
+          style={{
             position: "fixed",
             top: buttonPosition.top,
             left: buttonPosition.left,
             transform: "translateX(-50%)",
-            zIndex: 50,
+            zIndex: 100,
           }}
-          className="animate-in fade-in slide-in-from-bottom-4 duration-300"
+          className={`animate-in fade-in ${isMobile ? 'slide-in-from-top-2' : 'zoom-in-95'} duration-200`}
         >
           <button
             onClick={(e) => {
