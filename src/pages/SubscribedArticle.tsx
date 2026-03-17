@@ -3,7 +3,10 @@ import mermaid from "mermaid";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import { useTheme } from "../context/ThemeContext";
-import { Clock, Calendar, Layout, ZoomIn, ZoomOut, Maximize } from "lucide-react";
+import PracticalArtifact from "../components/article/PracticalArtifact";
+import EngineeringInsights from "../components/article/EngineeringInsights";
+import FlashcardGrid from "../components/article/FlashcardGrid";
+import { Clock, Calendar, Layout as LayoutIcon, ZoomIn, ZoomOut, Maximize } from "lucide-react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import TodaysSkeleton from "../components/skeletons/TodaysSkeleton";
 import FloatingAudioPlayer from "../components/FloatingAudioPlayer";
@@ -208,12 +211,43 @@ const SubscribedArticle: React.FC = () => {
                 <FloatingAudioPlayer src={article.audio_url} />
               )}
 
-              <article>{renderContent(article.content)}</article>
+              {article.content_json ? (
+                <div className="space-y-12">
+                  {/* Structured Core Content */}
+                  <article>{renderContent(article.content)}</article>
+
+                  {(() => {
+                    const parsed = typeof article.content_json === 'string' ? JSON.parse(article.content_json) : article.content_json;
+                    return (
+                      <>
+                        {parsed.practical_implementation && (
+                          <PracticalArtifact 
+                            {...parsed.practical_implementation} 
+                          />
+                        )}
+                        
+                        {(parsed.observability_metrics || parsed.anti_patterns) && (
+                          <EngineeringInsights 
+                            metrics={parsed.observability_metrics}
+                            antiPatterns={parsed.anti_patterns}
+                          />
+                        )}
+
+                        {parsed.flashcards && (
+                          <FlashcardGrid flashcards={parsed.flashcards} />
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              ) : (
+                <article>{renderContent(article.content)}</article>
+              )}
 
               {article.diagram && (
                 <div className="my-20">
                   <div className="flex items-center gap-2 mb-6 uppercase tracking-widest font-black text-gray-400 text-xs">
-                    <Layout size={16} /> SYSTEM ARCHITECTURE
+                    <LayoutIcon size={16} /> SYSTEM ARCHITECTURE
                   </div>
 
                   <TransformWrapper

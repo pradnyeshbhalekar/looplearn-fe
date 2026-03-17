@@ -1,32 +1,29 @@
 import { api } from "./axios";
 
+export interface Workspace {
+    id: string;
+    name: string;
+    owner_id: string;
+}
+
 export interface Plan {
     id: string;
     name: string;
-    billing_cycle: string | null;
-    domain: string;
-    monthly_price: number;
+    description: string;
+    price: number;
+    billing_cycle: string;
     features: string[];
 }
 
-export interface SubscriptionResponse {
-    subscription_id: string;
-    message: string;
-    ends_at: string | null;
-    razorpay: {
-        subscription_id: string;
-        status: string;
-        short_url: string;
-    };
-}
-
-export interface UserSubscription {
-    subscription_id: string;
-    status: string;
+export interface Subscription {
+    id: string;
+    user_id: string;
     plan_id: string;
-    plan_name: string;
-    domain: string;
-    ends_at: string | null;
+    workspace_id?: string;
+    status: string;
+    current_period_start: string;
+    current_period_end: string;
+    cancel_at_period_end: boolean;
     razorpay_id?: string;
 }
 
@@ -36,54 +33,52 @@ export interface Article {
     slug: string;
     content: string;
     diagram?: string;
-    audio_url?: string;
     domain?: string;
+    audio_url?: string;
     published_at?: string;
+    adaptive_json?: string;
+    content_json?: string;
+    adaptive_focus_content?: any;
+    child_topics?: any[];
 }
 
 export const subscriptionApi = {
-    fetchPlans: async (): Promise<Plan[]> => {
-        const response = await api.get("/api/subscriptions/plans");
+    getPlans: async () => {
+        const response = await api.get<Plan[]>("/api/subscriptions/plans");
         return response.data;
     },
-
-    createSubscription: async (payload: { planId: string, isTeam?: boolean, workspaceId?: string | null }): Promise<SubscriptionResponse> => {
-        const response = await api.post("/api/subscriptions/subscribe", {
-            plan_id: payload.planId,
-            is_team: payload.isTeam,
-            workspace_id: payload.workspaceId
+    subscribe: async (planId: string, workspaceId?: string) => {
+        const response = await api.post<Subscription>("/api/subscriptions/subscribe", {
+            plan_id: planId,
+            workspace_id: workspaceId
         });
         return response.data;
     },
-
-    getSubscriptionStatus: async (): Promise<{ status: string }> => {
-        const response = await api.get("/api/subscriptions/me");
+    getMe: async () => {
+        const response = await api.get<{
+            subscription: Subscription | null;
+            plan: Plan | null;
+        }>("/api/subscriptions/me");
         return response.data;
     },
-
-    confirmSubscription: async (): Promise<{ status: string; message?: string }> => {
-        const response = await api.post("/api/subscriptions/confirm");
+    cancel: async () => {
+        const response = await api.post("/api/subscriptions/cancel");
         return response.data;
     },
-
-    listMySubscriptions: async (): Promise<UserSubscription[]> => {
-        const response = await api.get("/api/subscriptions/me");
-        if (response.data.subscriptions) {
-            return response.data.subscriptions;
-        } else if (response.data.subscription) {
-            return [response.data.subscription];
-        }
-        return [];
-    },
-
-    getTodayArticleByDomain: async (domain: string): Promise<Article> => {
-        const formattedDomain = domain.replace(/_/g, " ");
-        const response = await api.get(`/api/subscriptions/me/today?domain=${encodeURIComponent(formattedDomain)}`);
+    getTodayArticle: async () => {
+        const response = await api.get<Article>("/api/articles/today");
         return response.data;
     },
-
-    getArticleBySlug: async (slug: string): Promise<Article & { subscription?: UserSubscription }> => {
-        const response = await api.get(`/api/subscriptions/me/article/${slug}`);
+    getTodayArticleByDomain: async (domain: string, focus?: string) => {
+        const params: any = { domain };
+        if (focus) params.focus = focus;
+        const response = await api.get<Article>("/api/subscriptions/me/today", { params });
         return response.data;
     },
+    getArticleBySlug: async (slug: string, focus?: string) => {
+        const params: any = {};
+        if (focus) params.focus = focus;
+        const response = await api.get<Article>(`/api/articles/${slug}`, { params });
+        return response.data;
+    }
 };
