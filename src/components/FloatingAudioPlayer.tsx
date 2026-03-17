@@ -32,9 +32,9 @@ const FloatingAudioPlayer: React.FC<FloatingAudioPlayerProps> = ({ src }) => {
       <motion.div
         layout
         transition={{ type: "spring", stiffness: 400, damping: 35, mass: 0.8 }}
-        className={`z-[100] transition-colors duration-300 overflow-hidden ${
+        className={`z-[100] transition-all duration-500 overflow-hidden ${
           isFloating 
-            ? "fixed bottom-8 right-8 w-80 bg-white/70 dark:bg-black/70 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.3)]" 
+            ? "fixed bottom-8 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm md:left-auto md:translate-x-0 md:right-8 md:w-80 bg-white/70 dark:bg-black/70 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.3)]" 
             : "relative w-full bg-blue-50/30 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-800/20"
         }`}
       >
