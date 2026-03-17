@@ -11,7 +11,15 @@ const TextSelectionExplainer: React.FC = () => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [explanation, setExplanation] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const explainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     const handleMouseUp = () => {
@@ -108,24 +116,30 @@ const TextSelectionExplainer: React.FC = () => {
       {buttonPosition && (
         <div
           ref={explainerRef}
-          style={{
+          style={isMobile ? {
+            position: "fixed",
+            bottom: "40px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 100,
+          } : {
             position: "fixed",
             top: buttonPosition.top,
             left: buttonPosition.left,
             transform: "translateX(-50%)",
             zIndex: 50,
           }}
-          className="animate-in fade-in zoom-in-95 duration-200"
+          className="animate-in fade-in slide-in-from-bottom-4 duration-300"
         >
           <button
             onClick={(e) => {
                 e.stopPropagation();
                 handleExplain();
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-xl shadow-blue-500/30 transition-all hover:scale-105 active:scale-95 group"
+            className={`flex items-center gap-2 ${isMobile ? 'px-8 py-4 bg-black dark:bg-white text-white dark:text-black scale-110' : 'px-4 py-2 bg-blue-600 text-white'} hover:bg-blue-700 rounded-full shadow-2xl shadow-blue-500/30 transition-all hover:scale-105 active:scale-95 group`}
           >
-            <Sparkles size={14} className="group-hover:rotate-12 transition-transform" />
-            <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Explain</span>
+            <Sparkles size={isMobile ? 18 : 14} className="group-hover:rotate-12 transition-transform" />
+            <span className={`${isMobile ? 'text-[12px]' : 'text-[10px]'} font-black uppercase tracking-widest whitespace-nowrap`}>Explain Concept</span>
           </button>
         </div>
       )}
