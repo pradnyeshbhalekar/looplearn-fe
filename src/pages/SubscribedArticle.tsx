@@ -12,6 +12,7 @@ import TodaysSkeleton from "../components/skeletons/TodaysSkeleton";
 import FloatingAudioPlayer from "../components/FloatingAudioPlayer";
 import { useParams, useLocation } from "react-router-dom";
 import { subscriptionApi, type Article } from "../api/subscription";
+import TextSelectionExplainer from "../components/article/TextSelectionExplainer";
 
 interface ArticleWithDomain extends Article {
   domain?: string;
@@ -189,7 +190,8 @@ const SubscribedArticle: React.FC = () => {
           {error && <p className="text-red-500">{error}</p>}
 
           {!loading && article && (
-            <>
+            <div className="relative">
+              <TextSelectionExplainer />
               <span className="text-[11px] font-black tracking-[0.3em] text-blue-600 uppercase">
                 {article.domain ?? "Technical Brief"}
               </span>
@@ -212,7 +214,7 @@ const SubscribedArticle: React.FC = () => {
               )}
 
               {article.content_json ? (
-                <div className="space-y-12">
+                <div className="space-y-12 explain-content-area">
                   {/* Structured Core Content */}
                   <article>{renderContent(article.content)}</article>
 
@@ -241,7 +243,7 @@ const SubscribedArticle: React.FC = () => {
                   })()}
                 </div>
               ) : (
-                <article>{renderContent(article.content)}</article>
+                <article className="explain-content-area">{renderContent(article.content)}</article>
               )}
 
               {article.diagram && (
@@ -293,7 +295,7 @@ const SubscribedArticle: React.FC = () => {
                   </TransformWrapper>
                 </div>
               )}
-            </>
+            </div>
           )}
         </main>
 
