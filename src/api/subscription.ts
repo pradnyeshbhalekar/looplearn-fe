@@ -36,9 +36,7 @@ export interface Article {
     domain?: string;
     audio_url?: string;
     published_at?: string;
-    adaptive_json?: string;
     content_json?: string;
-    adaptive_focus_content?: any;
     child_topics?: any[];
 }
 
@@ -69,16 +67,13 @@ export const subscriptionApi = {
         const response = await api.get<Article>("/api/articles/today");
         return response.data;
     },
-    getTodayArticleByDomain: async (domain: string, focus?: string) => {
-        const params: any = { domain };
-        if (focus) params.focus = focus;
+    getTodayArticleByDomain: async (domain: string) => {
+        const params = { domain };
         const response = await api.get<Article>("/api/subscriptions/me/today", { params });
         return response.data;
     },
-    getArticleBySlug: async (slug: string, focus?: string) => {
-        const params: any = {};
-        if (focus) params.focus = focus;
-        const response = await api.get<Article>(`/api/articles/${slug}`, { params });
+    getArticleBySlug: async (slug: string) => {
+        const response = await api.get<Article>(`/api/articles/${slug}`);
         return response.data;
     }
 };
