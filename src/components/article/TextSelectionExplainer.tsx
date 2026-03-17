@@ -29,22 +29,18 @@ const TextSelectionExplainer: React.FC = () => {
           // Verify if selection is within the content area
           let isWithinContentArea = false;
           let node: HTMLElement | null = range.startContainer.parentElement;
-          while (node && !["P", "LI", "H1", "H2", "H3", "ARTICLE"].includes(node.tagName)) {
+          
+          while (node && node.tagName !== "BODY") {
             if (node.classList.contains("explain-content-area")) {
-                isWithinContentArea = true;
-                break;
+              isWithinContentArea = true;
+              break;
             }
             node = node.parentElement;
           }
           
-          // Double check parent if it's strictly one of the allowed tags but might have the class
-          if (!isWithinContentArea && node?.classList.contains("explain-content-area")) {
-              isWithinContentArea = true;
-          }
-
           if (!isWithinContentArea) {
-              setButtonPosition(null);
-              return;
+            setButtonPosition(null);
+            return;
           }
 
           const contextText = node?.innerText || "";

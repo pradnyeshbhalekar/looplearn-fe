@@ -11,6 +11,7 @@ import PracticalArtifact from "../components/article/PracticalArtifact";
 import EngineeringInsights from "../components/article/EngineeringInsights";
 import FlashcardGrid from "../components/article/FlashcardGrid";
 import { subscriptionApi, type Article } from "../api/subscription";
+import TextSelectionExplainer from "../components/article/TextSelectionExplainer";
 
 /* ---------------- TYPES ---------------- */
 
@@ -203,7 +204,8 @@ export const Todays: React.FC = () => {
           {error && <p className="text-red-500">{error}</p>}
 
           {!loading && article && (
-            <>
+            <div className="relative">
+              <TextSelectionExplainer />
               <span className="text-[11px] font-black tracking-[0.3em] text-blue-600 uppercase">
                 {article.domain ?? "Technical Brief"}
               </span>
@@ -222,7 +224,7 @@ export const Todays: React.FC = () => {
               </div>
 
               {article.content_json ? (
-                 <div className="space-y-12">
+                 <div className="space-y-12 explain-content-area">
                    <article>{renderContent(article.content)}</article>
                    {(() => {
                       const parsed = typeof article.content_json === 'string' ? JSON.parse(article.content_json) : article.content_json;
@@ -245,7 +247,7 @@ export const Todays: React.FC = () => {
                    })()}
                  </div>
               ) : (
-                <article>{renderContent(article.content)}</article>
+                <article className="explain-content-area">{renderContent(article.content)}</article>
               )}
 
               {article.diagram && (
@@ -297,7 +299,7 @@ export const Todays: React.FC = () => {
                   </TransformWrapper>
                 </div>
               )}
-            </>
+            </div>
           )}
         </main>
 
