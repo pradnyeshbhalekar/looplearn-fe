@@ -381,7 +381,7 @@ export const Admin: React.FC = () => {
                 <X size={20} />
               </div>
               <h2 className="text-2xl font-black tracking-tight mb-2">Reject Article</h2>
-              <p className="text-gray-500 text-sm mb-8 leading-relaxed">Provide a reason for rejecting this AI-generated candidate. It will be moved out of the queue.</p>
+
 
               <div className="mb-8">
                 <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-3 ml-1">Rejection Note</label>
