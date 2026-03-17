@@ -140,7 +140,9 @@ const Dashboard = () => {
   const openTodayForDomain = async (domain: string) => {
     try {
       setProcessingDomain(domain);
-      const article = await subscriptionApi.getTodayArticleByDomain(domain);
+      // Normalize domain name: replace underscores with spaces for backend compatibility
+      const normalizedDomain = domain.replace(/_/g, " ");
+      const article = await subscriptionApi.getTodayArticleByDomain(normalizedDomain);
       navigate(`/subscriptions/article/${article.slug}`, { state: { article } });
     } catch {
       setError("Could not load today's article for selected subscription");

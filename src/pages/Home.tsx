@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { motion, useScroll, useSpring, useInView } from "framer-motion";
+import { motion, useScroll, useSpring, useInView, AnimatePresence } from "framer-motion";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
-import { ArrowRight, Users, Headphones, Zap, AlignLeft, Network } from "lucide-react";
+import { ArrowRight, Users, Headphones, Zap, AlignLeft, Network, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import TextSelectionExplainer from "../components/article/TextSelectionExplainer";
 
 /* ─────────────────────────────────────────────
    TYPING TEXT
@@ -92,6 +93,138 @@ const Reveal = ({
   );
 };
 
+
+const features = [
+  {
+    id: "workspaces",
+    title: "Team Workspaces",
+    tagline: "Team Infrastructure",
+    description: "Onboard your junior developers with high-yield seat packs. As a senior engineer, oversee their daily loops and ensure your team is mastering the stack at scale.",
+    icon: <Users size={28} />,
+    color: "blue",
+    accent: "text-blue-600",
+    bg: "bg-blue-500/10",
+    border: "border-blue-500/20"
+  },
+  {
+    id: "tutor",
+    title: "AI Tutor",
+    tagline: "Personal Insight",
+    description: "Highlight any complex technical term or concept across our platform to invoke your personal AI Tutor. Get instant, high-fidelity context without breaking flow.",
+    icon: <Sparkles size={28} />,
+    color: "orange",
+    accent: "text-orange-600",
+    bg: "bg-orange-500/10",
+    border: "border-orange-500/20"
+  },
+  {
+    id: "commuter",
+    title: "Commuter Mode",
+    tagline: "Neural Synthesis",
+    description: "High-quality neural audio synthesis. Listen to the daily briefing in Commuter Mode—anywhere, any device, with seamless state persistence.",
+    icon: <Headphones size={28} />,
+    color: "violet",
+    accent: "text-violet-600",
+    bg: "bg-violet-500/10",
+    border: "border-violet-500/20"
+  }
+];
+
+const FeatureSlideshow = () => {
+  const [idx, setIdx] = useState(0);
+  const active = features[idx];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIdx((prev) => (prev + 1) % features.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="relative w-full max-w-2xl mx-auto min-h-[340px] flex flex-col justify-center items-center">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={active.id}
+          initial={{ opacity: 0, scale: 0.98, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.98, y: -10 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full h-full"
+        >
+          <div className="relative h-[300px] flex flex-col justify-center rounded-[1.25rem] bg-white dark:bg-zinc-950 border border-gray-100 dark:border-white/5 p-6 sm:p-10 overflow-hidden shadow-2xl shadow-black/5">
+            {/* Ambient Background Glow */}
+            <div className={`absolute -top-12 -right-12 w-40 h-40 rounded-full ${active.bg} blur-[80px] transition-colors duration-1000`} />
+            
+            <div className="relative z-10 flex flex-col items-center text-center">
+              <div className={`w-12 h-12 rounded-xl ${active.bg} flex items-center justify-center mb-5 transition-colors duration-1000`}>
+                <div className={active.accent}>{active.icon}</div>
+              </div>
+
+              <span className={`text-[8px] font-black uppercase tracking-[0.3em] ${active.accent} mb-2 transition-colors duration-1000`}>
+                {active.tagline}
+              </span>
+
+              <h3 className="text-xl sm:text-3xl font-black uppercase tracking-tight text-black dark:text-white mb-3 leading-none">
+                {active.title}
+              </h3>
+
+              <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-base font-medium leading-relaxed max-w-md mx-auto leading-normal">
+                {active.description}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Progress Indicators */}
+      <div className="flex gap-3 mt-12">
+        {features.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setIdx(i)}
+            className="group relative h-1.5 w-12 rounded-full bg-gray-100 dark:bg-white/5 overflow-hidden"
+          >
+            <motion.div 
+              className={`absolute inset-0 h-full rounded-full transition-colors duration-1000 ${features[i].accent.replace("text-", "bg-")}`}
+              initial={false}
+              animate={{ 
+                width: i === idx ? "100%" : "0%",
+                opacity: i === idx ? 1 : 0
+              }}
+              transition={{ duration: 0.5 }}
+            />
+            {i === idx && (
+              <motion.div 
+                className="absolute inset-0 bg-white/20"
+                initial={{ x: "-100%" }}
+                animate={{ x: "0%" }}
+                transition={{ duration: 6, ease: "linear" }}
+              />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Navigation Controls */}
+      <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex justify-between pointer-events-none px-4 sm:-mx-16">
+        <button 
+          onClick={() => setIdx((prev) => (prev === 0 ? features.length - 1 : prev - 1))}
+          className="w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-white/5 flex items-center justify-center text-gray-400 hover:text-black dark:hover:text-white hover:scale-110 transition-all pointer-events-auto shadow-xl"
+        >
+          <ChevronLeft size={20} />
+        </button>
+        <button 
+          onClick={() => setIdx((prev) => (prev + 1) % features.length)}
+          className="w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-white/5 flex items-center justify-center text-gray-400 hover:text-black dark:hover:text-white hover:scale-110 transition-all pointer-events-auto shadow-xl"
+        >
+          <ChevronRight size={20} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
 /* ─────────────────────────────────────────────
    MARQUEE STRIP
 ───────────────────────────────────────────── */
@@ -155,6 +288,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-black transition-colors duration-500 scroll-smooth selection:bg-blue-500/30 font-sans overflow-x-hidden">
+      <TextSelectionExplainer />
 
       {/* Grain */}
       <div
@@ -190,7 +324,7 @@ const Home = () => {
             />
           </h1>
 
-          <p className="max-w-lg text-base sm:text-lg text-gray-500 dark:text-gray-400 font-semibold leading-relaxed tracking-tight mb-8 sm:mb-10 mx-auto">
+          <p className="explain-content-area max-w-lg text-base sm:text-lg text-gray-500 dark:text-gray-400 font-semibold leading-relaxed tracking-tight mb-8 sm:mb-10 mx-auto">
             LoopLearn delivers a single, high-signal technical briefing every 24 hours.
             Built for engineering minds who value depth over volume.
           </p>
@@ -238,7 +372,7 @@ const Home = () => {
             <span className="text-[10px] font-mono uppercase tracking-widest text-gray-400">The Problem</span>
           </Reveal>
 
-          <div className="grid sm:grid-cols-2 gap-5 sm:gap-8">
+          <div className="grid sm:grid-cols-2 gap-5 sm:gap-8 explain-content-area">
             {/* The Noise */}
             <Reveal delay={0} from="left">
               <div className="relative group rounded-2xl sm:rounded-3xl border border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-[#0d0d0d] p-7 sm:p-10 overflow-hidden h-full">
@@ -281,35 +415,7 @@ const Home = () => {
             <span className="text-[10px] font-mono uppercase tracking-widest text-gray-400">What You Get</span>
           </Reveal>
 
-          <div className="grid sm:grid-cols-2 gap-5 sm:gap-8">
-            {/* Workspaces */}
-            <Reveal delay={0}>
-              <div className="group relative rounded-2xl sm:rounded-3xl bg-white dark:bg-zinc-950 border border-gray-100 dark:border-white/5 p-7 sm:p-10 hover:border-blue-500/30 dark:hover:border-blue-500/20 hover:-translate-y-1 hover:shadow-2xl transition-all duration-500 overflow-hidden">
-                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center mb-6">
-                  <Users size={18} className="text-blue-600" />
-                </div>
-                <span className="text-[9px] font-mono uppercase tracking-widest text-blue-600 mb-3 block">Team Infrastructure</span>
-                <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black dark:text-white mb-4">Team Workspaces</h3>
-                <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base leading-relaxed font-medium">
-                  Onboard your junior developers with high-yield seat packs. As a senior engineer, oversee their daily loops and ensure your team is mastering the stack at scale.
-                </p>
-              </div>
-            </Reveal>
-
-            {/* Commuter Mode */}
-            <Reveal delay={0.1}>
-              <div className="group relative rounded-2xl sm:rounded-3xl bg-white dark:bg-zinc-950 border border-gray-100 dark:border-white/5 p-7 sm:p-10 hover:border-blue-500/30 dark:hover:border-blue-500/20 hover:-translate-y-1 hover:shadow-2xl transition-all duration-500 overflow-hidden">
-                <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center mb-6">
-                  <Headphones size={18} className="text-violet-600" />
-                </div>
-                <span className="text-[9px] font-mono uppercase tracking-widest text-violet-600 mb-3 block">Neural Synthesis</span>
-                <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black dark:text-white mb-4">Commuter Mode</h3>
-                <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base leading-relaxed font-medium">
-                  High-quality neural audio synthesis. Listen to the daily briefing in Commuter Mode—anywhere, any device, with seamless state persistence.
-                </p>
-              </div>
-            </Reveal>
-          </div>
+          <FeatureSlideshow />
         </div>
       </section>
 
