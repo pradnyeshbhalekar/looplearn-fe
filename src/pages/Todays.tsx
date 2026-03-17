@@ -7,38 +7,26 @@ import { useTheme } from "../context/ThemeContext";
 import { Clock, Calendar, Layout as LayoutIcon, ZoomIn, ZoomOut, Maximize } from "lucide-react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import TodaysSkeleton from "../components/skeletons/TodaysSkeleton";
-import FloatingAudioPlayer from "../components/FloatingAudioPlayer";
 import PracticalArtifact from "../components/article/PracticalArtifact";
 import EngineeringInsights from "../components/article/EngineeringInsights";
 import FlashcardGrid from "../components/article/FlashcardGrid";
+import { subscriptionApi, type Article } from "../api/subscription";
 
 /* ---------------- TYPES ---------------- */
 
-interface TodaysArticle {
-  id: string;
-  title: string;
-  slug: string;
-  content: string;
-  diagram?: string;
-  domain?: string;
-  audio_url?: string;
-  published_at?: string;
-  content_json?: string;
-}
+// Using global Article type from subscriptionApi
 
 /* ---------------- COMPONENT ---------------- */
 
 export const Todays: React.FC = () => {
   const { theme } = useTheme();
 
-  const [article, setArticle] = useState<TodaysArticle | null>(null);
+  const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [scrollProgress, setScrollProgress] = useState<number>(0);
 
   const diagramRef = useRef<HTMLDivElement | null>(null);
-
-  const BACKEND_URI = import.meta.env.VITE_API_BASE_URL as string;
 
   /* ---------------- SCROLL PROGRESS ---------------- */
 
@@ -62,40 +50,25 @@ export const Todays: React.FC = () => {
   useEffect(() => {
     const fetchTodayArticle = async () => {
       try {
-        const token = localStorage.getItem("token");
-
-        let url = `${BACKEND_URI}/api/articles/today`;
+        setLoading(true);
+        let data: Article;
+        
         if (domain) {
-          url += `?domain=${encodeURIComponent(domain)}`;
+          data = await subscriptionApi.getTodayArticleByDomain(domain);
+        } else {
+          data = await subscriptionApi.getTodayArticle();
         }
-
-        const response = await fetch(url, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to load today's article.");
-        }
-
-        const data: TodaysArticle = await response.json();
+        
         setArticle(data);
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("Unknown error occurred");
-        }
+        setError(err instanceof Error ? err.message : "Failed to load today's article.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchTodayArticle();
-  }, [BACKEND_URI]);
+  }, [domain]);
 
   /* ---------------- MERMAID ---------------- */
 
@@ -247,10 +220,6 @@ export const Todays: React.FC = () => {
                 <Clock size={14} />
                 6 MIN READ
               </div>
-
-              {article.audio_url && (
-                <FloatingAudioPlayer src={article.audio_url} />
-              )}
 
               {article.content_json ? (
                  <div className="space-y-12">
