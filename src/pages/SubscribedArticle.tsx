@@ -13,6 +13,7 @@ import FloatingAudioPlayer from "../components/FloatingAudioPlayer";
 import { useParams, useLocation } from "react-router-dom";
 import { subscriptionApi, type Article } from "../api/subscription";
 import TextSelectionExplainer from "../components/article/TextSelectionExplainer";
+import TradeoffComparison from "../components/article/TradeoffComparison";
 
 interface ArticleWithDomain extends Article {
   domain?: string;
@@ -232,6 +233,12 @@ const SubscribedArticle: React.FC = () => {
                           <EngineeringInsights 
                             metrics={parsed.observability_metrics}
                             antiPatterns={parsed.anti_patterns}
+                          />
+                        )}
+
+                        {parsed.theory?.tradeoffs && (
+                          <TradeoffComparison 
+                            tradeoffs={parsed.theory.tradeoffs} 
                           />
                         )}
 
