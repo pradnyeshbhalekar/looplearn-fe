@@ -5,6 +5,7 @@ import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import { ArrowRight, Users, Headphones, Zap, AlignLeft, Network, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import TextSelectionExplainer from "../components/article/TextSelectionExplainer";
+import { useIsMobile } from "../hooks/useMediaQuery";
 
 /* ─────────────────────────────────────────────
    TYPING TEXT
@@ -72,21 +73,26 @@ const Reveal = ({
   className?: string;
   from?: "bottom" | "left" | "right";
 }) => {
+  const isMobile = useIsMobile();
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-60px 0px" });
+  const inView = useInView(ref, { once: true, margin: isMobile ? "-20px 0px" : "-60px 0px" });
   const initial = {
-    bottom: { opacity: 0, y: 40 },
-    left:   { opacity: 0, x: -40 },
-    right:  { opacity: 0, x: 40 },
+    bottom: { opacity: 0, y: isMobile ? 20 : 40 },
+    left: { opacity: 0, x: isMobile ? -20 : -40 },
+    right: { opacity: 0, x: isMobile ? 20 : 40 },
   }[from];
   const animate = inView ? { opacity: 1, y: 0, x: 0 } : {};
+
+  // Slow down animation on mobile
+  const duration = isMobile ? 1.2 : 0.7;
+
   return (
     <motion.div
       ref={ref}
       className={className}
       initial={initial}
       animate={animate}
-      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay }}
+      transition={{ duration, ease: [0.16, 1, 0.3, 1], delay }}
     >
       {children}
     </motion.div>
@@ -133,6 +139,7 @@ const features = [
 const FeatureSlideshow = () => {
   const [idx, setIdx] = useState(0);
   const active = features[idx];
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -149,13 +156,13 @@ const FeatureSlideshow = () => {
           initial={{ opacity: 0, scale: 0.98, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.98, y: -10 }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: isMobile ? 0.8 : 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="w-full h-full"
         >
           <div className="relative h-[300px] flex flex-col justify-center rounded-[1.25rem] bg-white dark:bg-zinc-950 border border-gray-100 dark:border-white/5 p-6 sm:p-10 overflow-hidden shadow-2xl shadow-black/5">
             {/* Ambient Background Glow */}
             <div className={`absolute -top-12 -right-12 w-40 h-40 rounded-full ${active.bg} blur-[80px] transition-colors duration-1000`} />
-            
+
             <div className="relative z-10 flex flex-col items-center text-center">
               <div className={`w-12 h-12 rounded-xl ${active.bg} flex items-center justify-center mb-5 transition-colors duration-1000`}>
                 <div className={active.accent}>{active.icon}</div>
@@ -185,17 +192,17 @@ const FeatureSlideshow = () => {
             onClick={() => setIdx(i)}
             className="group relative h-1.5 w-12 rounded-full bg-gray-100 dark:bg-white/5 overflow-hidden"
           >
-            <motion.div 
+            <motion.div
               className={`absolute inset-0 h-full rounded-full transition-colors duration-1000 ${features[i].accent.replace("text-", "bg-")}`}
               initial={false}
-              animate={{ 
+              animate={{
                 width: i === idx ? "100%" : "0%",
                 opacity: i === idx ? 1 : 0
               }}
               transition={{ duration: 0.5 }}
             />
             {i === idx && (
-              <motion.div 
+              <motion.div
                 className="absolute inset-0 bg-white/20"
                 initial={{ x: "-100%" }}
                 animate={{ x: "0%" }}
@@ -208,13 +215,13 @@ const FeatureSlideshow = () => {
 
       {/* Navigation Controls */}
       <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex justify-between pointer-events-none px-4 sm:-mx-16">
-        <button 
+        <button
           onClick={() => setIdx((prev) => (prev === 0 ? features.length - 1 : prev - 1))}
           className="w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-white/5 flex items-center justify-center text-gray-400 hover:text-black dark:hover:text-white hover:scale-110 transition-all pointer-events-auto shadow-xl"
         >
           <ChevronLeft size={20} />
         </button>
-        <button 
+        <button
           onClick={() => setIdx((prev) => (prev + 1) % features.length)}
           className="w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-white/5 flex items-center justify-center text-gray-400 hover:text-black dark:hover:text-white hover:scale-110 transition-all pointer-events-auto shadow-xl"
         >
@@ -268,6 +275,7 @@ const Stat = ({ value, label }: { value: string; label: string }) => (
 const Home = () => {
   const token = localStorage.getItem("token");
   const isAuthenticated = !!token;
+  const isMobile = useIsMobile();
 
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
@@ -281,13 +289,13 @@ const Home = () => {
 
   // protocol steps
   const steps = [
-    { icon: AlignLeft,  title: "Distilled Briefing",         desc: "No fluff. High-signal technical extraction that respects your flow state. We optimize for the first 300 seconds of your day." },
-    { icon: Network,    title: "Structural Blueprint",        desc: "Architecture mapping. Spatially visualize the concept to anchor the mental model permanently." },
-    { icon: Zap,        title: "Implementation Vector",       desc: "Direct production implementation. We provide the 'how' through high-fidelity case studies and walkthroughs." },
+    { icon: AlignLeft, title: "Distilled Briefing", desc: "No fluff. High-signal technical extraction that respects your flow state. We optimize for the first 300 seconds of your day." },
+    { icon: Network, title: "Structural Blueprint", desc: "Architecture mapping. Spatially visualize the concept to anchor the mental model permanently." },
+    { icon: Zap, title: "Implementation Vector", desc: "Direct production implementation. We provide the 'how' through high-fidelity case studies and walkthroughs." },
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black transition-colors duration-500 scroll-smooth selection:bg-blue-500/30 font-sans overflow-x-hidden">
+    <div className={`min-h-screen bg-white dark:bg-black transition-colors ${isMobile ? 'duration-1000' : 'duration-500'} scroll-smooth selection:bg-blue-500/30 font-sans overflow-x-hidden`}>
       <TextSelectionExplainer />
 
       {/* Grain */}
@@ -319,7 +327,7 @@ const Home = () => {
             <TypingText
               phrases={[
                 { text: "One topic a day." },
-                { text: "Mastered.", className: "text-blue-600 italic" },
+                { text: "Mastered.", className: "text-blue-600 " },
               ]}
             />
           </h1>
@@ -354,9 +362,9 @@ const Home = () => {
             transition={{ delay: 0.7, duration: 0.6 }}
             className="flex justify-center gap-8 sm:gap-12 mt-10 sm:mt-14 pt-8 sm:pt-10 border-t border-gray-100 dark:border-white/5 w-full"
           >
-            <Stat value="1"    label="Topic Daily" />
-            <Stat value="5 min" label="Deep Read"   />
-            <Stat value="∞"    label="Retention"   />
+            <Stat value="1" label="Topic Daily" />
+            <Stat value="5 min" label="Deep Read" />
+            <Stat value="∞" label="Retention" />
           </motion.div>
         </motion.div>
       </section>
