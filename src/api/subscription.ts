@@ -10,9 +10,10 @@ export interface Plan {
     id: string;
     name: string;
     description: string;
-    price: number;
+    monthly_price: number;
     billing_cycle: string;
     features: string[];
+    domain: string;
 }
 
 export interface Subscription {
@@ -51,7 +52,7 @@ export interface UserSubscription {
 }
 
 export const subscriptionApi = {
-    getPlans: async () => {
+    fetchPlans: async () => {
         const response = await api.get<Plan[]>("/api/subscriptions/plans");
         return response.data;
     },
@@ -59,10 +60,11 @@ export const subscriptionApi = {
         const response = await api.get<{ subscriptions: UserSubscription[] }>("/api/subscriptions/me/list");
         return response.data.subscriptions;
     },
-    subscribe: async (planId: string, workspaceId?: string) => {
+    createSubscription: async (payload: { planId: string, isTeam?: boolean, workspaceId?: string | null }) => {
         const response = await api.post<Subscription>("/api/subscriptions/subscribe", {
-            plan_id: planId,
-            workspace_id: workspaceId
+            plan_id: payload.planId,
+            is_team: payload.isTeam,
+            workspace_id: payload.workspaceId
         });
         return response.data;
     },
