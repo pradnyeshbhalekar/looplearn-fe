@@ -668,3 +668,634 @@ LoopLearn
     ├── Navigation Links
     └── Logout
 ```
+
+---
+
+# Chapter 4: Implementation
+
+## 4.1 List of Tables with Attributes and Constraints
+
+### 1. `users`
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() |
+| email | TEXT | UNIQUE, NOT NULL |
+| is_active | BOOLEAN | DEFAULT TRUE |
+| created_at | TIMESTAMP | DEFAULT NOW() |
+
+### 2. `user_roles`
+| Column | Type | Constraints |
+|---|---|---|
+| user_id | UUID | PRIMARY KEY, REFERENCES users(id) ON DELETE CASCADE |
+| role | TEXT | NOT NULL, CHECK IN ('admin', 'editor', 'viewer') |
+
+### 3. `plans`
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() |
+| domain | TEXT | — |
+| billing_cycle | TEXT | — |
+| name | TEXT | — |
+| monthly_price | INTEGER | — |
+| features | JSONB | — |
+| razorpay_plan_id | TEXT | UNIQUE |
+
+### 4. `subscriptions`
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() |
+| user_id | UUID | REFERENCES users(id) ON DELETE CASCADE |
+| plan_id | UUID | REFERENCES plans(id) ON DELETE CASCADE |
+| status | TEXT | CHECK IN ('active', 'paused', 'cancelled', 'pending') |
+| started_at | TIMESTAMP | DEFAULT NOW() |
+| ends_at | TIMESTAMP | — |
+| razorpay_subscription_id | TEXT | UNIQUE |
+| razorpay_plan_id | TEXT | — |
+| is_team | BOOLEAN | DEFAULT FALSE |
+
+### 5. `concept_nodes`
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() |
+| name | TEXT | UNIQUE, NOT NULL |
+| node_type | TEXT | NOT NULL, CHECK IN ('domain', 'concept', 'feature') |
+| last_used_at | TIMESTAMP | NULL |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() |
+
+### 6. `concept_edges`
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() |
+| from_node_id | UUID | NOT NULL, REFERENCES concept_nodes(id) ON DELETE CASCADE |
+| to_node_id | UUID | NOT NULL, REFERENCES concept_nodes(id) ON DELETE CASCADE |
+| strength | REAL | NOT NULL, DEFAULT 1.0 |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() |
+| — | — | UNIQUE(from_node_id, to_node_id) |
+
+### 7. `sources`
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() |
+| url | TEXT | — |
+| title | TEXT | — |
+| content_text | TEXT | — |
+| scrape_status | TEXT | DEFAULT 'pending' |
+| scraped_at | TIMESTAMP | — |
+
+### 8. `compiled_topics`
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() |
+| topic_node_id | UUID | REFERENCES concept_nodes(id) |
+| compiled_data | JSONB | — |
+
+### 9. `article_candidate`
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() |
+| compiled_topic_id | UUID | NOT NULL, REFERENCES compiled_topics(id) ON DELETE CASCADE |
+| topic_node_id | UUID | NOT NULL, REFERENCES concept_nodes(id) ON DELETE CASCADE |
+| title | TEXT | NOT NULL |
+| slug | TEXT | NOT NULL |
+| article_md | TEXT | NOT NULL |
+| diagram | TEXT | — |
+| status | TEXT | NOT NULL, CHECK ('pending', 'approved', 'rejected'), DEFAULT 'pending' |
+| scheduled_for | DATE | — |
+| rejection_reason | TEXT | — |
+| reviewed_by | UUID | REFERENCES users(id) |
+| reviewed_at | TIMESTAMP | — |
+| audio_url | TEXT | — |
+| content_json | JSONB | — |
+| created_at | TIMESTAMP | DEFAULT NOW() |
+
+### 10. `published_articles`
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() |
+| candidate_id | UUID | REFERENCES article_candidate(id) |
+| topic_node_id | UUID | NOT NULL, REFERENCES concept_nodes(id) |
+| title | TEXT | NOT NULL |
+| slug | TEXT | NOT NULL |
+| article_md | TEXT | NOT NULL |
+| diagram | TEXT | — |
+| published_at | TIMESTAMP | DEFAULT NOW() |
+| published_by | UUID | — |
+| scheduled_for | DATE | NOT NULL |
+| audio_url | TEXT | — |
+| content_json | JSONB | — |
+
+### 11. `article_visibility`
+| Column | Type | Constraints |
+|---|---|---|
+| published_article_id | UUID | PRIMARY KEY, REFERENCES published_articles(id) ON DELETE CASCADE |
+| audience | TEXT | NOT NULL, CHECK IN ('public', 'subscriber') |
+
+### 12. `workspaces`
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() |
+| name | VARCHAR(255) | NOT NULL |
+| owner_id | UUID | REFERENCES users(id) |
+| seat_limit | INTEGER | DEFAULT 5 |
+| created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP |
+
+### 13. `workspace_members`
+| Column | Type | Constraints |
+|---|---|---|
+| workspace_id | UUID | REFERENCES workspaces(id) ON DELETE CASCADE |
+| user_id | UUID | REFERENCES users(id) |
+| role | VARCHAR(20) | CHECK IN ('admin', 'member'), DEFAULT 'member' |
+| joined_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP |
+| — | — | PRIMARY KEY (workspace_id, user_id) |
+
+### Sample Queries
+
+**Fetch today's subscriber article for a domain:**
+```sql
+SELECT pa.id, pa.title, pa.slug, pa.article_md, pa.diagram, pa.audio_url,
+       pa.published_at, topic.name AS topic_name, domain.name AS domain_name
+FROM published_articles pa
+JOIN article_visibility av ON av.published_article_id = pa.id
+JOIN concept_nodes topic ON pa.topic_node_id = topic.id
+JOIN concept_edges ce ON ce.to_node_id = topic.id
+JOIN concept_nodes domain ON ce.from_node_id = domain.id AND domain.node_type = 'domain'
+WHERE pa.scheduled_for::date = CURRENT_DATE
+  AND LOWER(domain.name) = LOWER('Databases')
+  AND av.audience = 'subscriber'
+ORDER BY pa.published_at DESC NULLS LAST
+LIMIT 1;
+```
+
+**Pick an unused topic from a domain:**
+```sql
+SELECT t.id, t.name, d.name
+FROM concept_nodes t
+INNER JOIN concept_edges e ON t.id = e.to_node_id
+INNER JOIN concept_nodes d ON e.from_node_id = d.id
+WHERE LOWER(TRIM(d.name)) = LOWER(TRIM('System Design'))
+  AND d.node_type = 'domain'
+  AND t.node_type = 'concept'
+  AND t.id NOT IN (SELECT topic_node_id FROM published_articles WHERE topic_node_id IS NOT NULL)
+  AND t.id NOT IN (SELECT topic_node_id FROM article_candidate WHERE topic_node_id IS NOT NULL)
+ORDER BY RANDOM()
+LIMIT 1;
+```
+
+## 4.2 System Coding
+
+### 4.2.1 Backend Architecture (Complete File Listing)
+```
+daily/
+├── run.py                              # Flask app entry, CORS, blueprint registration
+├── requirements.txt                    # Python dependencies
+├── seed_plans.py                       # Seed subscription plans into database
+├── test.py                             # Basic test script
+├── .github/
+│   └── workflows/
+│       ├── daily-pipeline.yml          # Free article cron (8:00 PM IST)
+│       └── premium-daily-pipeline.yml  # Premium article cron (5:00 PM IST)
+├── app/
+│   ├── config/
+│   │   ├── db.py                       # PostgreSQL connection with retry logic
+│   │   └── jwt.py                      # JWT secret configuration
+│   ├── models/
+│   │   ├── schema.py                   # DB initialization (all table creation)
+│   │   ├── graph.py                    # Knowledge graph (concept_nodes, concept_edges)
+│   │   ├── user.py                     # Users, roles, subscriptions
+│   │   ├── workspace.py               # Workspaces, workspace_members
+│   │   ├── published_articles.py       # Published articles CRUD
+│   │   ├── article_candidate.py        # Candidate articles (pending review)
+│   │   ├── sources.py                  # Web sources table
+│   │   ├── daily_posts.py              # Daily posts (legacy)
+│   │   ├── topic_history.py            # Topic usage history
+│   │   ├── topic_sources.py            # Topic-source linking
+│   │   ├── compiled_topics.py          # Compiled topic storage
+│   │   ├── pipeline_jobs.py            # Background job tracking
+│   │   └── auth_context.py             # Auth context (role + subscription)
+│   ├── routes/
+│   │   ├── auth_routes.py              # Google OAuth + JWT issuance
+│   │   ├── pipeline_routes.py          # Pipeline trigger endpoints
+│   │   ├── subscription_routes.py      # Plans, subscriptions, Razorpay webhooks
+│   │   ├── public_article_routes.py    # Public article access
+│   │   ├── admin_candidate_routes.py   # Admin candidate review
+│   │   ├── explain_routes.py           # AI Tutor endpoint
+│   │   ├── workspace_routes.py         # Workspace CRUD
+│   │   ├── topic_routes.py             # Topic management
+│   │   └── source_routes.py            # Source management
+│   ├── services/
+│   │   ├── pipeline_service.py         # Core pipeline orchestration
+│   │   ├── pick_topic.py               # Topic selection from knowledge graph
+│   │   ├── topic_compiler.py           # Gemini AI content structuring
+│   │   ├── audio_service.py            # Edge TTS + Cloudinary upload
+│   │   ├── explain_service.py          # AI Tutor (GPT-4o-mini)
+│   │   ├── fetcher.py                  # DuckDuckGo source discovery
+│   │   ├── scraper.py                  # URL content extraction
+│   │   ├── source_scrape_service.py    # Scrape orchestration + quality filtering
+│   │   ├── text_cleaner.py             # Raw text sanitization
+│   │   ├── text_structurer.py          # Text formatting utilities
+│   │   ├── child_topic_service.py      # Graph child topic linking
+│   │   ├── source_service.py           # Bulk source storage
+│   │   ├── compiled_topic_service.py   # Compiled topic persistence
+│   │   ├── publish_service.py          # Publishing logic
+│   │   ├── publisher_service.py        # Publisher utilities
+│   │   ├── pipeline_job_service.py     # Job lifecycle management
+│   │   ├── razorpay_service.py         # Razorpay plan/subscription creation
+│   │   ├── email_service.py            # Admin email notifications
+│   │   └── workspace_service.py        # Workspace CRUD operations
+│   ├── jobs/
+│   │   ├── pipeline_worker.py          # Background pipeline worker thread
+│   │   └── job_store.py                # In-memory job state store
+│   └── utils/
+│       ├── auth_decorators.py          # @require_auth, @require_admin, @require_pipeline_secret
+│       ├── auth_middleware.py           # JWT verification middleware
+│       ├── jwt_utils.py                # JWT token creation
+│       ├── email_utils.py              # Admin email helper
+│       └── rate_limiter.py             # Request rate limiting
+```
+
+### 4.2.2 Frontend Architecture (Complete File Listing)
+```
+looplearn/
+├── index.html                          # Entry point (Google Fonts, OAuth script)
+├── vite.config.ts                      # Vite build configuration
+├── vercel.json                         # Vercel deployment config
+├── package.json                        # Dependencies
+├── tsconfig.json                       # TypeScript config
+├── eslint.config.js                    # ESLint configuration
+├── src/
+│   ├── main.tsx                        # React root (Provider, ThemeProvider, Router)
+│   ├── index.css                       # Global styles, Tailwind tokens, theme transitions
+│   ├── App.tsx                         # App shell
+│   ├── App.css                         # App-level styles
+│   ├── context/
+│   │   └── ThemeContext.tsx             # Light/dark theme state management
+│   ├── hooks/
+│   │   └── useMediaQuery.ts            # Mobile detection hook
+│   ├── api/
+│   │   ├── axios.ts                    # Base Axios instance with JWT interceptor
+│   │   ├── subscription.ts             # Subscription API calls
+│   │   ├── explain.ts                  # AI Tutor API calls
+│   │   └── workspace.ts               # Workspace API calls
+│   ├── app/
+│   │   ├── store.ts                    # Redux store configuration
+│   │   └── hook.ts                     # Typed Redux hooks
+│   ├── features/
+│   │   └── auth/
+│   │       └── authSlice.ts            # Authentication state (Redux slice)
+│   ├── pages/
+│   │   ├── Home.tsx                    # Landing page
+│   │   ├── Login.tsx                   # Google OAuth login
+│   │   ├── Dashboard.tsx               # User dashboard
+│   │   ├── Todays.tsx                  # Daily briefing reader
+│   │   ├── SubscribedArticle.tsx       # Full article view (subscriber)
+│   │   ├── Pricing.tsx                 # Subscription plans
+│   │   ├── SubscriptionSuccess.tsx     # Post-payment success page
+│   │   ├── Admin.tsx                   # Admin panel
+│   │   └── AuthCallback.tsx            # OAuth callback handler
+│   ├── components/
+│   │   ├── layout/
+│   │   │   ├── Navbar.tsx              # Global navigation bar
+│   │   │   └── Footer.tsx              # Global footer
+│   │   ├── article/
+│   │   │   ├── TextSelectionExplainer.tsx  # AI Tutor trigger
+│   │   │   ├── ExplanationPopover.tsx  # AI Tutor popover
+│   │   │   └── TradeoffComparison.tsx  # Trade-off table component
+│   │   ├── auth/                       # Auth-related components
+│   │   ├── skeletons/                  # Loading skeleton components
+│   │   ├── Logo.tsx                    # Brand logo
+│   │   ├── AudioPlayer.tsx             # Commuter mode audio player
+│   │   └── FloatingAudioPlayer.tsx     # Floating audio player
+│   ├── routes/
+│   │   └── router.tsx                  # Route definitions
+│   └── types/                          # TypeScript type definitions
+```
+
+### 4.2.3 Key Code Snippets
+
+**GitHub Actions — Free Pipeline Cron (daily-pipeline.yml):**
+```yaml
+name: Daily Pipeline
+on:
+  schedule:
+    - cron: "30 14 * * *"
+  workflow_dispatch:
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger daily pipeline
+        run: |
+          curl -X POST "${{ secrets.PIPELINE_URL}}" \
+            -H "Authorization: Bearer ${{ secrets.PIPELINE_TOKEN }}" \
+            -H "Content-Type: application/json"
+```
+
+**GitHub Actions — Premium Pipeline Cron (premium-daily-pipeline.yml):**
+```yaml
+name: Daily Premium Pipeline
+on:
+  schedule:
+    - cron: "30 11 * * *"
+  workflow_dispatch:
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Premium Pipeline
+        run: |
+          curl -X POST "${{secrets.PREMIUM_PIPELINE_URL}}" \
+            -H "Authorization: Bearer ${{ secrets.PIPELINE_TOKEN }}" \
+            -H "Content-Type: application/json"
+```
+
+**Database Connection with Retry Logic (db.py):**
+```python
+@retry(stop=stop_after_attempt(3), wait=wait_fixed(2), reraise=True, retry=retry_if_exception_type(OperationalError))
+def get_connection():
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url:
+        raise ValueError("DATABASE_URL not found in .env")
+    db_url = _with_sslmode(db_url)
+    return psycopg2.connect(
+        db_url,
+        connect_timeout=10,
+        keepalives=1,
+        keepalives_idle=30,
+        keepalives_interval=10,
+        keepalives_count=5
+    )
+```
+
+**Knowledge Graph — Insert Node with Case Standardization (graph.py):**
+```python
+def insert_node(name, node_type):
+    conn = get_connection()
+    cursor = conn.cursor()
+    processed_name = name.strip()
+    if node_type == 'domain':
+        if processed_name.upper() == 'APIS':
+            processed_name = 'APIs'
+        else:
+            processed_name = processed_name.title()
+    cursor.execute("""
+        INSERT INTO concept_nodes (name, node_type)
+        VALUES (%s, %s)
+        ON CONFLICT (name)
+        DO UPDATE SET 
+            node_type = CASE 
+                WHEN concept_nodes.node_type = 'domain' AND EXCLUDED.node_type = 'concept' THEN 'domain'
+                ELSE EXCLUDED.node_type 
+            END
+        RETURNING id, name, node_type;
+    """, (processed_name, node_type))
+    node = cursor.fetchone()
+    conn.commit()
+    close_connection(conn)
+    return node
+```
+
+**Child Topic Graph Linking (child_topic_service.py):**
+```python
+def add_child_topics(parent_topic_id, child_concepts, domain_name=None):
+    inserted = []
+    domain_id = None
+    if domain_name:
+        conn = get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id FROM concept_nodes WHERE LOWER(TRIM(name)) = LOWER(TRIM(%s)) AND node_type = 'domain';", (domain_name,))
+            row = cursor.fetchone()
+            if row:
+                domain_id = row[0]
+        finally:
+            close_connection(conn)
+    for topic_name in child_concepts:
+        node = insert_node(topic_name, "concept")
+        child_node_id = node[0]
+        insert_or_increment_edge(parent_topic_id, child_node_id)
+        if domain_id:
+            insert_or_increment_edge(domain_id, child_node_id)
+        inserted.append({"child_topic": topic_name, "child_node_id": child_node_id})
+    return inserted
+```
+
+**Pipeline Authentication Decorator (auth_decorators.py):**
+```python
+def require_pipeline_secret(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        header = request.headers.get("Authorization") or ""
+        token = header.split("Bearer ", 1)[1].strip() if header.startswith("Bearer ") else None
+        allowed = {
+            v for v in [
+                os.getenv("PIPELINE_SECRET"),
+                os.getenv("CRON_SECRET"),
+                os.getenv("PIPELINE_TOKEN")
+            ] if v
+        }
+        if not token or (allowed and token not in allowed):
+            if request.remote_addr not in ("127.0.0.1", "::1"):
+                abort(401)
+        return fn(*args, **kwargs)
+    return wrapper
+```
+
+**Razorpay Webhook HMAC Verification (subscription_routes.py):**
+```python
+@subscription_routes.post("/webhook")
+def razorpay_webhook():
+    body = request.data
+    signature = request.headers.get("X-Razorpay-Signature", "")
+    secret = os.getenv("RAZORPAY_WEBHOOK_SECRET")
+    if secret:
+        digest = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+        if digest != signature:
+            return jsonify({"error": "invalid signature"}), 400
+    data = request.get_json(silent=True) or {}
+    event = data.get("event")
+    entity = (data.get("payload", {}).get("subscription", {}) or {}).get("entity", {}) or {}
+    rzp_sub_id = entity.get("id")
+    notes = entity.get("notes", {}) or {}
+    user_id = notes.get("user_id")
+    plan_id = notes.get("plan_id")
+    ...
+```
+
+## 4.3 Screen Layouts
+
+| Screen | Route | Key Components | Access Level |
+|---|---|---|---|
+| **Home** | `/` | Typing animation, feature slideshow, protocol steps, stats, CTA | Public |
+| **Login** | `/login` | Google OAuth button, dark/light theme support | Public |
+| **Dashboard** | `/dashboard` | Subscribed domain cards, today's article previews, subscription status | Authenticated |
+| **Today's Briefing** | `/todays` | Markdown article, Mermaid diagram (pinch-to-zoom), floating audio player | Authenticated |
+| **Pricing** | `/pricing` | Plan cards with feature lists, Razorpay checkout integration | Public |
+| **Admin** | `/admin` | Pipeline trigger (per-domain/all), candidate queue, approve/reject actions | Admin only |
+
+### Key API Endpoints
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `POST` | `/api/auth/google` | — | Verify Google ID token, return JWT |
+| `GET` | `/api/auth/me` | JWT | Get current user profile and subscription |
+| `GET` | `/api/subscriptions/plans` | — | List all available plans |
+| `POST` | `/api/subscriptions/subscribe` | JWT | Create Razorpay subscription |
+| `POST` | `/api/subscriptions/webhook` | HMAC | Razorpay payment webhook |
+| `GET` | `/api/subscriptions/me/today` | JWT | Get subscriber's daily article |
+| `GET` | `/api/subscriptions/me/article/:slug` | JWT | Get specific article by slug |
+| `POST` | `/api/pipeline/run` | Pipeline Secret | Trigger free pipeline (1 article) |
+| `POST` | `/api/pipeline/start-premium` | — | Trigger premium pipeline (1 or all domains) |
+| `POST` | `/api/pipeline/start-all` | Pipeline Secret | Trigger all-domains premium pipeline |
+| `GET` | `/api/pipeline/status/:job_id` | — | Check pipeline job status |
+| `POST` | `/api/explain` | JWT | AI Tutor text explanation |
+| `POST` | `/api/workspaces` | JWT | Create workspace |
+| `POST` | `/api/workspaces/:id/members` | JWT | Add member to workspace |
+
+---
+
+# Chapter 5: Analysis & Related Work
+
+## 5.1 Comparison with Existing Solutions
+
+| Feature | LoopLearn | Daily.dev | Medium | YouTube |
+|---|---|---|---|---|
+| AI-structured content compilation | Yes | No | No | No |
+| Knowledge graph topic selection | Yes | No | No | No |
+| Auto-generated architecture diagrams | Yes | No | No | No |
+| Neural audio synthesis | Yes | No | No | Yes (manual recording) |
+| In-context AI Tutor | Yes | No | No | No |
+| Team workspaces | Yes | No | No | No |
+| Anti-repeat topic algorithm | Yes | No | No | No |
+| One topic per day constraint | Yes | No | No | No |
+| Flashcards and trade-off analysis | Yes | No | No | No |
+| Dual pipeline (free/subscriber) | Yes | No | No | No |
+
+## 5.2 Technical Challenges Solved
+
+### 5.2.1 Autonomous Content Structuring Pipeline
+Designed an end-to-end pipeline integrating web scraping (DuckDuckGo + BeautifulSoup/Trafilatura), AI structuring (Gemini 2.5 Flash), audio synthesis (Edge TTS), and cloud storage (Cloudinary). Ensured reliability across multiple asynchronous stages using background threading, retry logic (tenacity), and job status tracking.
+
+### 5.2.2 Knowledge Graph-Based Topic Selection
+Implemented a graph-based model using `concept_nodes` and `concept_edges` to prevent topic repetition and maintain conceptual continuity across domains. The topic picker excludes already-published and already-candidated topics, then selects randomly weighted by edge strength.
+
+### 5.2.3 Graph Connectivity — Child Topic Linking
+During initial implementation, child topics generated by the AI were being inserted as concept nodes but were not being linked back to their parent domain. This caused domain exhaustion errors: the system believed a domain had no available topics because orphaned child nodes were unreachable from the domain node. The fix involved creating two edges per child topic: one from the parent topic and one directly from the domain node.
+
+### 5.2.4 Multi-Model AI Orchestration
+Integrated three AI services with consistent data flow: Gemini 2.5 Flash for structured JSON content compilation, GPT-4o-mini (via GitHub Models) for real-time text explanations, and Microsoft Edge TTS for audio narration. Each service produces output in a different format, requiring careful data transformation at each stage.
+
+### 5.2.5 Dynamic Content Structuring
+Converted unstructured scraped web content into structured JSON with defined schema (theory, trade-offs, case studies, flashcards, mermaid diagrams). The Gemini system prompt enforces strict output formatting, including rules to prevent invalid Mermaid syntax (e.g., no special characters in diagram labels).
+
+### 5.2.6 Scalable Hybrid Database Design
+Designed a relational + graph hybrid schema using PostgreSQL. The relational layer handles ACID-compliant operations (subscriptions, payments, user management), while the graph layer (concept_nodes + concept_edges with strength field) enables weighted, non-repetitive topic discovery. Domains are not fixed — any number of domains can be added by inserting a new node with `node_type = 'domain'`.
+
+### 5.2.7 Real-Time AI Tutor Integration
+Built a contextual explanation system triggered by user text selection. The selected text and its surrounding paragraph are sent to GPT-4o-mini, which returns a 3-sentence explanation displayed in a centered popover. This avoids breaking reading flow while providing on-demand depth.
+
+### 5.2.8 Subscription and Payment Synchronization
+Handled Razorpay webhooks for subscription lifecycle events (activated, charged, cancelled, halted). HMAC signature verification ensures webhook authenticity. The system supports individual and team subscriptions, with team licenses priced at 4x the base rate.
+
+### 5.2.9 Cross-Service Deployment
+Managed deployment across Render (backend), Vercel (frontend), Neon (PostgreSQL), Cloudinary (audio), and GitHub Actions (cron). Coordinated CORS policies, SSL requirements, and environment variable management across all services.
+
+### 5.2.10 Mobile Performance Optimization
+Framer Motion animations caused frame drops on lower-end Android devices during theme transitions. Implemented device-aware animation durations using a custom `useMediaQuery` hook — longer, gentler transitions on mobile to reduce CPU spikes during DOM repainting.
+
+## 5.3 Testing
+
+### 5.3.1 API Testing (Postman)
+
+All backend API endpoints were tested using Postman during development. Test cases were organized by route blueprint.
+
+| Test Case | Endpoint | Method | Input | Expected Output | Status |
+|---|---|---|---|---|---|
+| Valid Google login | `/api/auth/google` | POST | Valid Google id_token | 200: JWT token + user object | Pass |
+| Invalid token login | `/api/auth/google` | POST | Expired/invalid id_token | 401: Invalid Google token | Pass |
+| Fetch plans | `/api/subscriptions/plans` | GET | — | 200: Array of plan objects | Pass |
+| Subscribe to plan | `/api/subscriptions/subscribe` | POST | plan_id + JWT | 200: Razorpay subscription_id | Pass |
+| Subscribe without plan_id | `/api/subscriptions/subscribe` | POST | JWT only | 400: plan_id is required | Pass |
+| Razorpay webhook (valid) | `/api/subscriptions/webhook` | POST | Valid HMAC signature | 200: ok: true | Pass |
+| Razorpay webhook (invalid) | `/api/subscriptions/webhook` | POST | Invalid signature | 400: invalid signature | Pass |
+| Get today's article | `/api/subscriptions/me/today` | GET | JWT + active subscription | 200: Article with audio_url | Pass |
+| Get today's article (no sub) | `/api/subscriptions/me/today` | GET | JWT without subscription | 403: active subscription required | Pass |
+| Trigger free pipeline | `/api/pipeline/run` | POST | Pipeline secret | 202: job_id + status started | Pass |
+| Trigger without auth | `/api/pipeline/run` | POST | No auth header | 401: Unauthorized | Pass |
+| Trigger all-domains pipeline | `/api/pipeline/start-all` | POST | Pipeline secret | 202: job_id | Pass |
+| Check job status | `/api/pipeline/status/:id` | GET | Valid UUID | 200: Job object with status | Pass |
+| AI Tutor explain | `/api/explain` | POST | highlighted_text + context | 200: Explanation text | Pass |
+| Create workspace | `/api/workspaces` | POST | name + JWT | 200: Workspace object | Pass |
+
+### 5.3.2 Manual UI Testing
+
+| Test Case | Platform | Expected Behavior | Status |
+|---|---|---|---|
+| Home page animations render smoothly | Desktop Chrome | All Framer Motion animations play without jank | Pass |
+| Theme toggle transitions | Mobile Android | Gradual 1000ms color transition (mobile optimization) | Pass |
+| Google OAuth login flow | Desktop + Mobile | Successful login and redirect to Dashboard | Pass |
+| Article markdown rendering | Desktop Chrome | Headings, code blocks, and lists render correctly | Pass |
+| Mermaid diagram display | Desktop Chrome | Diagram renders from JSON; pinch-to-zoom works | Pass |
+| Commuter Mode audio playback | Mobile Android | Audio streams from Cloudinary; floating player visible | Pass |
+| AI Tutor text selection | Desktop Chrome | Explanation popover appears centered after text highlight | Pass |
+| Responsive layout | Mobile viewport (375px) | All pages display correctly without horizontal overflow | Pass |
+| Navbar mobile menu | Mobile Android | Hamburger menu opens; links navigate correctly | Pass |
+| Subscription flow end-to-end | Desktop Chrome | Plan selection → Razorpay checkout → success page → Dashboard shows domain | Pass |
+
+## 5.4 Implementation Limitations
+
+1. **AI Output Validation**: The Gemini model occasionally generates content that requires manual review. Mermaid diagrams may contain syntactically invalid labels (e.g., parentheses in node labels), requiring strict prompt engineering to mitigate.
+
+2. **Scraping Reliability**: Web scraping success depends heavily on source website structure. Some URLs return restricted content (paywalls, JavaScript-rendered pages), causing scrape failures. The system filters results by minimum content length (300 characters raw, 200 characters cleaned) but some low-quality sources may still pass.
+
+3. **External API Latency**: The pipeline involves sequential calls to DuckDuckGo, Gemini, Edge TTS, and Cloudinary. A single pipeline run for all domains can take several minutes. Network timeouts or API rate limits can cause partial failures.
+
+4. **No Automated Testing Suite**: The project currently relies on manual testing via Postman and browser testing. No automated unit or integration test suite is implemented.
+
+5. **Single-Region Deployment**: The backend runs on a single Render instance. No horizontal scaling, load balancing, or multi-region deployment is currently configured.
+
+6. **Edge TTS Dependency**: The audio synthesis relies on Microsoft's Edge TTS service, which does not offer an official API or SLA. Changes to the service could impact audio generation reliability.
+
+---
+
+# Chapter 6: Conclusion & Future Work
+
+## 6.1 Conclusion
+
+LoopLearn demonstrates the practical application of AI as a structuring and compilation tool for technical education. The system:
+
+- Structures content from web sources into standardized, high-fidelity learning formats using Google Gemini 2.5 Flash, including trade-off analysis, case studies, flashcards, and Mermaid diagrams extracted directly from the compiled JSON.
+- Maintains a knowledge graph of engineering concepts that grows autonomously as child topics are linked back to their parent domains, enabling non-repetitive topic selection across an expandable set of domains.
+- Provides multimodal learning through text, auto-generated architectural diagrams, and neural audio synthesis, all persisted in PostgreSQL.
+- Operates two automated pipelines via GitHub Actions cron jobs: a free pipeline (8:00 PM IST) that generates candidate articles awaiting admin approval, and a premium pipeline (5:00 PM IST) that auto-publishes subscriber-exclusive content across all domains.
+- Supports team learning through workspace-based subscriptions where engineering leads can invite colleagues at a reduced per-seat cost.
+- Delivers a responsive frontend optimized for mobile devices, with adaptive animation durations to prevent performance degradation on lower-end hardware.
+
+## 6.2 Future Work
+
+1. **Spaced Repetition Engine**: Implement an SM-2 based system to resurface previously read topics as quizzes for active recall.
+2. **Personalized Learning Paths**: Use reading history and quiz performance to dynamically adjust topic selection priority per user.
+3. **Interactive Code Playgrounds**: Embed runnable code snippets directly within articles using sandboxed execution environments.
+4. **Mobile App (React Native)**: Native mobile experience with offline reading and push notification reminders.
+5. **Automated Test Suite**: Implement pytest-based unit and integration tests for all backend services and API routes.
+6. **Community Features**: Discussion threads, shared notes, and content quality ratings.
+7. **Multi-Language Support**: Translate articles into regional languages using translation APIs.
+8. **Analytics Dashboard**: Team-level learning metrics and engagement analytics for engineering managers.
+9. **Horizontal Scaling**: Multi-instance deployment with load balancing and database connection pooling.
+
+## 6.3 References
+
+1. Google Gemini API Documentation — https://ai.google.dev/docs
+2. Flask Documentation — https://flask.palletsprojects.com/
+3. React Documentation — https://react.dev/
+4. Tailwind CSS Documentation — https://tailwindcss.com/docs
+5. Framer Motion Documentation — https://www.framer.com/motion/
+6. Mermaid.js Documentation — https://mermaid.js.org/
+7. Edge TTS — https://github.com/rany2/edge-tts
+8. Razorpay API Documentation — https://razorpay.com/docs/api/
+9. Cloudinary Documentation — https://cloudinary.com/documentation
+10. PostgreSQL Documentation — https://www.postgresql.org/docs/
+11. Redux Toolkit Documentation — https://redux-toolkit.js.org/
+12. Neon Serverless Postgres — https://neon.tech/docs
+13. GitHub Actions Documentation — https://docs.github.com/en/actions
+14. DuckDuckGo Search Python Library — https://pypi.org/project/duckduckgo-search/
+15. Resend Email API — https://resend.com/docs
