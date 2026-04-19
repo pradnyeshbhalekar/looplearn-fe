@@ -287,22 +287,32 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  <div className="mt-auto flex gap-3">
-                    <button
-                      onClick={() => openWorkspaceManager(w)}
-                      className="flex-1 flex items-center justify-center bg-gray-50 hover:bg-gray-100 dark:bg-[#151515] dark:hover:bg-[#1a1a1a] text-black dark:text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-[0.2em] transition-all border border-gray-100 dark:border-white/5"
-                    >
-                      <Users size={14} className="mr-2" /> Manage Team
-                    </button>
-                    {w.owner_id === currentUser?.id && (
+                  <div className="mt-auto flex flex-col gap-3">
+                    {w.todays_topic && (
                       <button
-                        onClick={() => navigate(`/pricing?team=true&workspace_id=${w.id}`)}
-                        className="w-14 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-blue-600/20 active:scale-95"
-                        title="Link Team License"
+                        onClick={() => navigate(`/subscriptions/article/${w.todays_topic!.slug}`, { state: { article: w.todays_topic } })}
+                        className="w-full flex items-center justify-center bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-black py-3 rounded-2xl text-[10px] uppercase tracking-[0.2em] transition-all hover:bg-blue-100 dark:hover:bg-blue-900/30 border border-blue-100 dark:border-blue-900/30"
                       >
-                        <Crown size={18} />
+                        <Zap size={14} className="mr-2" /> Today's Briefing
                       </button>
                     )}
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => openWorkspaceManager(w)}
+                        className="flex-1 flex items-center justify-center bg-gray-50 hover:bg-gray-100 dark:bg-[#151515] dark:hover:bg-[#1a1a1a] text-black dark:text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-[0.2em] transition-all border border-gray-100 dark:border-white/5"
+                      >
+                        <Users size={14} className="mr-2" /> Manage Team
+                      </button>
+                      {w.owner_id === currentUser?.id && (
+                        <button
+                          onClick={() => navigate(`/pricing?team=true&workspace_id=${w.id}`)}
+                          className="w-14 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-blue-600/20 active:scale-95"
+                          title="Link Team License"
+                        >
+                          <Crown size={18} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -361,80 +371,80 @@ const Dashboard = () => {
                 </button>
               </div>
 
-              {workspaceDetails.is_admin && (
-                <>
-                  <div className="mb-6 shrink-0 p-5 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20 rounded-2xl">
-                    <h4 className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400 mb-4 flex items-center gap-2">
-                      <Crown size={14} /> Team Briefing & License
-                    </h4>
-                    {workspaceDetails.subscription ? (
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-bold">{workspaceDetails.subscription.plan_name}</p>
-                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">
-                              {formatDomainName(workspaceDetails.subscription.domain)} • LICENSED
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Expires</p>
-                            <p className="text-xs font-bold">{new Date(workspaceDetails.subscription.ends_at).toLocaleDateString()}</p>
-                          </div>
+              <div className="mb-6 shrink-0 p-5 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20 rounded-2xl">
+                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400 mb-4 flex items-center gap-2">
+                  <Crown size={14} /> Team Briefing & License
+                </h4>
+                {workspaceDetails.subscription ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-bold">{workspaceDetails.subscription.plan_name}</p>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">
+                          {formatDomainName(workspaceDetails.subscription.domain)} • LICENSED
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Expires</p>
+                        <p className="text-xs font-bold">{new Date(workspaceDetails.subscription.ends_at).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    
+                    {workspaceDetails.todays_topic && (
+                      <button
+                        onClick={() => {
+                          navigate(`/subscriptions/article/${workspaceDetails.todays_topic.slug}`, {
+                            state: { article: workspaceDetails.todays_topic }
+                          });
+                        }}
+                        className="w-full flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl transition-all group"
+                      >
+                        <div className="text-left">
+                          <p className="text-[10px] font-black uppercase tracking-widest opacity-70">Team's Daily Drop</p>
+                          <p className="text-xs font-bold line-clamp-1">{workspaceDetails.todays_topic.title}</p>
                         </div>
-                        
-                        {workspaceDetails.todays_topic && (
-                          <button
-                            onClick={() => {
-                              navigate(`/subscriptions/article/${workspaceDetails.todays_topic.slug}`, {
-                                state: { article: workspaceDetails.todays_topic }
-                              });
-                            }}
-                            className="w-full flex items-center justify-between bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl transition-all group"
-                          >
-                            <div className="text-left">
-                              <p className="text-[10px] font-black uppercase tracking-widest opacity-70">Team's Daily Drop</p>
-                              <p className="text-xs font-bold line-clamp-1">{workspaceDetails.todays_topic.title}</p>
-                            </div>
-                            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                          </button>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-gray-500 font-medium">No active team license.</p>
-                        <button
-                          onClick={() => navigate(`/pricing?team=true&workspace_id=${selectedWorkspace.id}`)}
-                          className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest hover:underline"
-                        >
-                          Upgrade Now
-                        </button>
-                      </div>
+                        <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                      </button>
                     )}
                   </div>
-
-                  <div className="mb-6 shrink-0">
-                    <form onSubmit={handleInviteMember} className="flex gap-2">
-                      <div className="relative flex-1">
-                        <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input
-                          type="email"
-                          value={inviteEmail}
-                          onChange={(e) => setInviteEmail(e.target.value)}
-                          placeholder="Invitee email address..."
-                          className="w-full bg-gray-50 dark:bg-[#0c0c0c] border border-gray-200 dark:border-gray-800 rounded-xl pl-10 pr-4 py-3 text-sm text-black dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
-                          required
-                        />
-                      </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-500 font-medium">No active team license.</p>
+                    {workspaceDetails.is_admin && (
                       <button
-                        type="submit"
-                        disabled={isInvitingMember}
-                        className="bg-black dark:bg-white text-white dark:text-black font-bold px-6 py-3 rounded-xl text-sm transition-transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center min-w-[100px]"
+                        onClick={() => navigate(`/pricing?team=true&workspace_id=${selectedWorkspace.id}`)}
+                        className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest hover:underline"
                       >
-                        {isInvitingMember ? <Loader2 size={16} className="animate-spin" /> : "Invite"}
+                        Upgrade Now
                       </button>
-                    </form>
+                    )}
                   </div>
-                </>
+                )}
+              </div>
+
+              {workspaceDetails.is_admin && (
+                <div className="mb-6 shrink-0">
+                  <form onSubmit={handleInviteMember} className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="email"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        placeholder="Invitee email address..."
+                        className="w-full bg-gray-50 dark:bg-[#0c0c0c] border border-gray-200 dark:border-gray-800 rounded-xl pl-10 pr-4 py-3 text-sm text-black dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
+                        required
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isInvitingMember}
+                      className="bg-black dark:bg-white text-white dark:text-black font-bold px-6 py-3 rounded-xl text-sm transition-transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center min-w-[100px]"
+                    >
+                      {isInvitingMember ? <Loader2 size={16} className="animate-spin" /> : "Invite"}
+                    </button>
+                  </form>
+                </div>
               )}
 
               <div className="flex-1 overflow-y-auto min-h-[200px] border-t border-gray-100 dark:border-gray-800 pt-4">

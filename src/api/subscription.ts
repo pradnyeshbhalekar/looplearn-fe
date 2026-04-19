@@ -60,6 +60,11 @@ export const subscriptionApi = {
         const response = await api.get<{ subscriptions: UserSubscription[] }>("/api/subscriptions/me/list");
         return response.data.subscriptions;
     },
+    confirmSubscription: async (sid?: string | null) => {
+        const body = sid ? { sid } : {};
+        const response = await api.post<{ status: string; message?: string }>("/api/subscriptions/confirm", body);
+        return response.data;
+    },
     createSubscription: async (payload: { planId: string, isTeam?: boolean, workspaceId?: string | null }) => {
         const response = await api.post<Subscription>("/api/subscriptions/subscribe", {
             plan_id: payload.planId,

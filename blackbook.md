@@ -44,7 +44,7 @@
 
 ### The Information Overload Problem in Modern Software Engineering
 
-The contemporary software engineering profession is characterized by a paradox: the abundance of educational resources has not proportionally improved practitioner expertise. According to Stack Overflow's 2024 Developer Survey, over 90% of developers rely on self-directed online learning, yet a substantial majority report difficulty staying current with evolving technologies. The sheer volume of available content — spanning blog posts, video tutorials, online courses, newsletters, conference talks, documentation updates, and social media threads — has created an environment where the challenge is no longer access to information, but rather the effective processing and retention of it.
+The contemporary software engineering profession is characterized by a paradox: the abundance of educational resources has not proportionally improved practitioner expertise. According to Stack Overflow's 2024 Developer Survey [7], over 90% of developers rely on self-directed online learning, yet a substantial majority report difficulty staying current with evolving technologies. The sheer volume of available content — spanning blog posts, video tutorials, online courses, newsletters, conference talks, documentation updates, and social media threads — has created an environment where the challenge is no longer access to information, but rather the effective processing and retention of it.
 
 This phenomenon, broadly termed *information overload*, manifests in several observable patterns within the engineering community. Engineers subscribe to multiple newsletters (TLDR, Bytes, Hacker Newsletter), follow aggregation platforms (Daily.dev, Hacker News), and queue video tutorials (YouTube, Udemy) — yet consistently report feeling behind on industry trends. The root cause is structural: these platforms optimize for engagement metrics (click-through rates, watch time, page views) rather than knowledge retention. A video tutorial watched at 2x speed generates the same revenue as one watched attentively, yet the learning outcomes differ dramatically.
 
@@ -58,11 +58,11 @@ LoopLearn is built upon a pedagogical framework called **"Close the Loop"**, whi
 
 **Phase 1 — Read (Comprehension)**: The learner encounters a structured article that introduces a technical concept through a multi-layered format: an introductory hook that establishes relevance, followed by a clear technical explanation, practical implementation examples with line-by-line breakdowns, and trade-off analysis comparing alternative approaches. This structured format ensures that the concept is presented with sufficient context to ground initial understanding.
 
-**Phase 2 — Visualize (Mental Model Construction)**: Each article is accompanied by an auto-generated Mermaid diagram — typically an architecture flowchart, sequence diagram, or system interaction diagram. Visualization serves a specific cognitive function: it forces the learner to map abstract concepts onto spatial relationships. Research in multimedia learning (Mayer, 2009) demonstrates that combining textual and visual representations significantly improves information retention compared to text alone, because the learner constructs dual mental representations that reinforce each other.
+**Phase 2 — Visualize (Mental Model Construction)**: Each article is accompanied by an auto-generated Mermaid diagram — typically an architecture flowchart, sequence diagram, or system interaction diagram. Visualization serves a specific cognitive function: it forces the learner to map abstract concepts onto spatial relationships. Research in multimedia learning [3] demonstrates that combining textual and visual representations significantly improves information retention compared to text alone, because the learner constructs dual mental representations that reinforce each other.
 
 **Phase 3 — Implement (Active Recall and Application)**: The article includes practical implementation artifacts (code snippets, configuration files, CLI commands) with explanatory breakdowns, flashcards for active recall, and common anti-patterns with consequences. This phase transitions the learner from passive reception to active engagement. The testing effect — the finding that attempting to retrieve information from memory strengthens long-term retention more effectively than re-reading — is the core principle at work.
 
-The rationale for constraining content to **one topic per day** is rooted in the spacing effect (Ebbinghaus, 1885), which demonstrates that distributed practice over time produces stronger long-term retention than massed practice. By presenting a single concept daily, LoopLearn avoids the cognitive overload associated with binge learning while building a consistent habit of structured knowledge acquisition. Over the course of a month, a subscriber receiving content across a domain such as "System Design" accumulates 30 deep-dive articles, each reinforcing and extending the knowledge graph built by previous readings.
+The rationale for constraining content to **one topic per day** is rooted in the spacing effect [2], which demonstrates that distributed practice over time produces stronger long-term retention than massed practice. By presenting a single concept daily, LoopLearn avoids the cognitive overload associated with binge learning while building a consistent habit of structured knowledge acquisition. Over the course of a month, a subscriber receiving content across a domain such as "System Design" accumulates 30 deep-dive articles, each reinforcing and extending the knowledge graph built by previous readings.
 
 This approach stands in contrast to the prevailing model of self-directed learning, where engineers spend hours on a weekend consuming tutorials and then retain little of the material by the following week. LoopLearn's design assumes that sustainable learning requires both structural constraints (one topic, one format, one time per day) and active engagement mechanisms (flashcards, diagrams, case studies) to overcome the natural decay of memory.
 
@@ -216,7 +216,7 @@ LeetCode and HackerRank are the dominant platforms for algorithmic problem-solvi
 
 ### Limitation 1: Volume Over Depth
 
-The prevailing model in developer education is to maximize content volume — more articles, more videos, more courses — under the assumption that greater availability leads to better learning outcomes. This assumption is not supported by evidence from educational psychology. The capacity of working memory is limited (Miller, 1956, estimated approximately 7 ± 2 items), and information transfer from working memory to long-term memory requires focused attention, elaboration, and spaced practice.
+The prevailing model in developer education is to maximize content volume — more articles, more videos, more courses — under the assumption that greater availability leads to better learning outcomes. This assumption is not supported by evidence from educational psychology. The capacity of working memory is limited [5] (estimated approximately 7 ± 2 items), and information transfer from working memory to long-term memory requires focused attention, elaboration, and spaced practice.
 
 Platforms that deliver 50+ articles per day (Daily.dev), 20+ video recommendations per session (YouTube), or courses spanning 40+ hours (Udemy) overwhelm working memory and encourage shallow processing. The learner skims, bookmarks, and moves on — accumulating a growing backlog of "content to review" that is never actually reviewed. LoopLearn addresses this by constraining delivery to one topic per day per domain, ensuring that the learner's attention is focused on a single concept with sufficient depth to support transfer to long-term memory.
 
@@ -230,7 +230,7 @@ Furthermore, the content discovery process on aggregation platforms is influence
 
 Software architecture is inherently spatial: services communicate across networks, data flows through pipelines, state machines transition between states. Yet the dominant medium for technical content — text — is linear. A written description of a microservice architecture requires the reader to mentally construct the spatial arrangement of components, their connections, and data flow directions.
 
-Research in multimedia learning (Mayer, 2009) demonstrates that presenting information through both verbal and visual channels simultaneously produces significantly better learning outcomes than either channel alone. This is the basis of the Dual Coding Theory (Paivio, 1971), which posits that information processed through both verbal and visual cognitive subsystems is stored more durably. Despite this evidence, fewer than 10% of technical blog posts include architectural diagrams, and those that do typically use static images that cannot be dynamically generated or adapted to the specific topic being discussed. LoopLearn addresses this by including a Mermaid diagram in every article, generated from the compiled JSON and rendered interactively in the browser.
+Research in multimedia learning [3] demonstrates that presenting information through both verbal and visual channels simultaneously produces significantly better learning outcomes than either channel alone. This is the basis of the Dual Coding Theory [4], which posits that information processed through both verbal and visual cognitive subsystems is stored more durably. Despite this evidence, fewer than 10% of technical blog posts include architectural diagrams, and those that do typically use static images that cannot be dynamically generated or adapted to the specific topic being discussed. LoopLearn addresses this by including a Mermaid diagram in every article, generated from the compiled JSON and rendered interactively in the browser.
 
 ### Limitation 4: Limited Audio Support for Passive Learning Contexts
 
@@ -246,9 +246,21 @@ Existing platforms do not support team-level subscriptions with shared content d
 
 ### Limitation 6: Passive Consumption Without Active Recall Mechanisms
 
-The majority of technical content is designed for one-time consumption: read the article, watch the video, close the tab. There is no mechanism to test whether the learner actually retained the information. Active recall — the process of retrieving information from memory without re-reading the source — is one of the most robust findings in learning science (Roediger & Butler, 2011). Flashcards, practice tests, and retrieval exercises produce significantly stronger long-term retention than repeated reading.
+The majority of technical content is designed for one-time consumption: read the article, watch the video, close the tab. There is no mechanism to test whether the learner actually retained the information. Active recall — the process of retrieving information from memory without re-reading the source — is one of the most robust findings in learning science [6]. Flashcards, practice tests, and retrieval exercises produce significantly stronger long-term retention than repeated reading.
 
 LoopLearn integrates active recall mechanisms directly into each article: flashcards (question-answer pairs), trade-off comparison tables (forcing the learner to reason about pros and cons of alternative approaches), and anti-pattern analysis (requiring the learner to identify why a common mistake leads to specific consequences). These components are not separate exercises — they are part of the structured JSON compiled by Gemini and rendered within the same article interface.
+
+## 2.3 Objectives of the Thesis
+
+Based on the literature survey conducted above and the identified limitations of existing platforms, the following objectives are defined for this thesis work:
+
+1. To design and develop a full-stack web application (LoopLearn) that delivers structured, AI-compiled technical articles on a daily basis, addressing the information overload problem faced by software engineers.
+2. To implement a knowledge graph-based topic selection algorithm that ensures non-repetitive, domain-specific content delivery by traversing concept relationships stored in a relational-graph hybrid database.
+3. To integrate multiple AI models (Google Gemini 2.5 Flash for content structuring, GPT-4o-mini for real-time contextual explanations, and Microsoft Edge TTS for audio synthesis) into a unified content generation pipeline.
+4. To implement the "Close the Loop" pedagogical methodology — combining structured reading, architectural visualization through auto-generated Mermaid diagrams, and active recall through flashcards — to improve knowledge retention over passive consumption models.
+5. To build a subscription-based monetization system with Razorpay integration, supporting both individual and team subscriptions with workspace-based collaboration.
+6. To automate content generation and publication through scheduled CI/CD pipelines (GitHub Actions), with a dual-pipeline architecture providing admin-reviewed content for free users and auto-published content for subscribers.
+7. To validate the system through end-to-end testing of all pipelines, addressing real challenges such as knowledge graph connectivity, Mermaid diagram syntax errors, multi-model orchestration timeouts, and mobile performance optimization.
 
 ---
 
@@ -1816,11 +1828,34 @@ The dual-pipeline architecture — a free pipeline with admin approval and a pre
 
 From a technical perspective, the project demonstrates that a full-stack application with AI orchestration, payment processing, team collaboration, and content delivery can be implemented with a compact technology stack (Python/Flask, React/Vite, PostgreSQL, GitHub Actions) without requiring complex infrastructure such as message queues, container orchestration, or microservice architectures. The deployment on managed platforms (Render for backend, Vercel for frontend, Neon for database, Cloudinary for media) eliminates infrastructure management overhead and enables a single developer to operate the system.
 
+### Important Conclusions (Point Form)
+
+- The "Close the Loop" methodology (Read → Visualize → Implement) effectively addresses passive consumption by integrating active recall mechanisms directly into the content delivery format.
+- Multi-model AI orchestration (Gemini 2.5 Flash + GPT-4o-mini + Edge TTS) is more effective than relying on a single general-purpose model, as each model is optimized for its specific task — content structuring, real-time explanation, and audio synthesis respectively.
+- A relational-graph hybrid database within PostgreSQL successfully replaces the need for a dedicated graph database (Neo4j) for knowledge domain modeling, reducing infrastructure complexity while maintaining graph traversal capabilities.
+- The knowledge graph-based topic selection algorithm with anti-repeat filtering ensures non-redundant, domain-specific content delivery across all subscribed domains.
+- The dual-pipeline architecture (admin-reviewed free pipeline + auto-published premium pipeline) balances content quality control with daily delivery consistency.
+- Constraining content to one topic per day per domain, rooted in the spacing effect [2], produces a sustainable learning habit compared to binge-consumption models.
+- Prompt engineering proved to be the most effective solution for AI output quality issues (Mermaid diagram syntax errors), reducing rendering failures from ~20% to below 2%.
+- Background job execution with asynchronous status tracking resolved HTTP timeout limitations for long-running multi-domain pipeline operations.
+- Team workspaces with inherited subscription access enable shared learning experiences across engineering teams, addressing the knowledge fragmentation problem in organizations.
+- The compact technology stack (Python/Flask, React/Vite, PostgreSQL, GitHub Actions) deployed on managed platforms (Render, Vercel, Neon, Cloudinary) demonstrates that a single developer can build and operate a production-grade AI-powered SaaS application without complex infrastructure.
+
 ## 6.2 Future Work
+
+The following items define the work planned for the next semester and future iterations of the project:
+
+- **Spaced Repetition Engine (SM-2 Algorithm)**: Implement a spaced repetition system that schedules review of previously read articles based on the learner's retention performance using the SM-2 algorithm [1], with a new `user_article_reviews` table tracking easiness factor, review intervals, and next review dates.
+- **Collaborative Knowledge Paths**: Allow subscribers and team admins to create custom learning paths — ordered sequences of articles across domains following a specific curriculum (e.g., "Databases → APIs → System Design → DevOps").
+- **Horizontal Scaling of Pipeline Execution**: Transition from single-threaded background jobs to a Redis-backed job queue (Celery or RQ) for parallel domain processing, enabling fault isolation and scaling beyond 20+ domains.
+- **Offline Mode PWA**: Convert the React frontend into a Progressive Web App with service worker caching, enabling offline article reading and audio playback for the most recent 7 days of content per subscribed domain.
+- **Analytics Dashboard**: Build a subscriber-facing analytics dashboard visualizing learning progress — articles read per domain, streak tracking, knowledge graph coverage percentage, and time spent per article.
+
+### Detailed Description of Key Future Work Items
 
 ### Spaced Repetition Engine (SM-2 Algorithm)
 
-The most impactful planned enhancement is a spaced repetition system (SRS) that schedules review of previously read articles based on the learner's retention performance. The implementation would use the **SM-2 algorithm**, originally developed by Piotr Wozniak for SuperMemo.
+The most impactful planned enhancement is a spaced repetition system (SRS) that schedules review of previously read articles based on the learner's retention performance. The implementation would use the **SM-2 algorithm**, originally developed by Piotr Wozniak for SuperMemo [1].
 
 The SM-2 algorithm operates on individual flashcards (or, in LoopLearn's case, articles) and adjusts the review interval based on the learner's self-reported quality of recall:
 
@@ -1916,3 +1951,168 @@ A subscriber-facing analytics dashboard that visualizes learning progress: artic
 [21] Resend, "Resend API Documentation," 2024. Available: https://resend.com/docs
 
 [22] A. Terekhov, "Framer Motion Documentation," 2024. Available: https://www.framer.com/motion/
+
+---
+
+# Appendix A: Topic Selection Algorithm — Complete Implementation
+
+The following is the complete implementation of the knowledge graph-based topic selection algorithm used by LoopLearn's content generation pipeline. This algorithm traverses the `concept_nodes` and `concept_edges` tables to select an unpublished concept within a specified engineering domain.
+
+## A.1 pick_topic_domain() — Domain-Specific Topic Selection
+
+```python
+def pick_topic_domain(domain_name=None):
+    """
+    Selects an unpublished concept from the knowledge graph for a specific domain.
+    Uses graph traversal: domain -> concept_edges -> concept_nodes.
+    Excludes topics already in published_articles or article_candidate.
+    Falls back to the domain node itself if all child concepts are exhausted.
+    """
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        
+        if domain_name:
+            # Primary query: find an unused concept connected to this domain
+            cursor.execute("""
+                SELECT t.id, t.name, d.name
+                FROM concept_nodes t
+                INNER JOIN concept_edges e ON t.id = e.to_node_id
+                INNER JOIN concept_nodes d ON e.from_node_id = d.id
+                WHERE LOWER(TRIM(d.name)) = LOWER(TRIM(%s)) 
+                  AND d.node_type = 'domain' 
+                  AND t.node_type = 'concept'
+                  AND t.id NOT IN (
+                      SELECT topic_node_id 
+                      FROM published_articles 
+                      WHERE topic_node_id IS NOT NULL
+                  )
+                  AND t.id NOT IN (
+                      SELECT topic_node_id
+                      FROM article_candidate
+                      WHERE topic_node_id IS NOT NULL
+                  )
+                ORDER BY RANDOM()
+                LIMIT 1;
+            """, (domain_name,))
+            row = cursor.fetchone()
+            
+            if not row:
+                # Fallback: use the domain node itself as the topic
+                cursor.execute("""
+                    SELECT id, name, name 
+                    FROM concept_nodes 
+                    WHERE LOWER(TRIM(name)) = LOWER(TRIM(%s))
+                      AND node_type = 'domain'
+                      AND id NOT IN (
+                          SELECT topic_node_id 
+                          FROM published_articles 
+                          WHERE topic_node_id IS NOT NULL
+                      )
+                    LIMIT 1;
+                """, (domain_name,))
+                row = cursor.fetchone()
+                if not row:
+                    return None
+                    
+        if row:
+            actual_domain = row[2] if (len(row) > 2 and row[2]) else (domain_name or "General")
+            return {
+                "topic_node_id": row[0], 
+                "topic_name": row[1],
+                "domain": actual_domain
+            }
+        return None
+    except Exception as e:
+        return None
+    finally:
+        close_connection(conn)
+```
+
+## A.2 add_child_topics() — Knowledge Graph Expansion
+
+```python
+def add_child_topics(parent_topic_id, child_names, domain_name):
+    """
+    Inserts child concepts returned by Gemini into the knowledge graph.
+    Creates two edges per child:
+      1. parent_topic -> child (hierarchical relationship)
+      2. domain -> child (ensures discoverability by pick_topic_domain)
+    Uses ON CONFLICT to handle duplicate nodes and increment edge strength.
+    """
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        
+        # Resolve domain node ID
+        cursor.execute(
+            "SELECT id FROM concept_nodes WHERE LOWER(TRIM(name)) = LOWER(TRIM(%s)) AND node_type = 'domain'",
+            (domain_name,)
+        )
+        domain_row = cursor.fetchone()
+        if not domain_row:
+            return
+        domain_id = domain_row[0]
+        
+        for child_name in child_names:
+            # Insert child node (or update if exists)
+            child_id = insert_node(child_name, 'concept')
+            if not child_id:
+                continue
+            
+            # Edge 1: parent topic -> child
+            cursor.execute("""
+                INSERT INTO concept_edges (from_node_id, to_node_id)
+                VALUES (%s, %s)
+                ON CONFLICT (from_node_id, to_node_id)
+                DO UPDATE SET strength = concept_edges.strength + 1;
+            """, (parent_topic_id, child_id))
+            
+            # Edge 2: domain -> child (critical for discoverability)
+            cursor.execute("""
+                INSERT INTO concept_edges (from_node_id, to_node_id)
+                VALUES (%s, %s)
+                ON CONFLICT (from_node_id, to_node_id)
+                DO UPDATE SET strength = concept_edges.strength + 1;
+            """, (domain_id, child_id))
+        
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+    finally:
+        close_connection(conn)
+```
+
+## A.3 insert_node() — Idempotent Node Insertion
+
+```python
+def insert_node(name, node_type='concept'):
+    """
+    Inserts a concept node into the knowledge graph.
+    Uses ON CONFLICT (name) DO UPDATE to handle duplicates.
+    Preserves existing node_type if the node already exists
+    (prevents downgrading a 'domain' to a 'concept').
+    Returns the node's UUID.
+    """
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO concept_nodes (name, node_type)
+            VALUES (%s, %s)
+            ON CONFLICT (name) DO UPDATE
+            SET node_type = CASE
+                WHEN concept_nodes.node_type = 'domain' THEN 'domain'
+                ELSE EXCLUDED.node_type
+            END
+            RETURNING id;
+        """, (name, node_type))
+        row = cursor.fetchone()
+        conn.commit()
+        return row[0] if row else None
+    except Exception as e:
+        conn.rollback()
+        return None
+    finally:
+        close_connection(conn)
+```

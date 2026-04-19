@@ -22,7 +22,8 @@ const SubscriptionSuccess = () => {
                 pollCount.current += 1;
 
                 // Proactively ask backend to confirm with Razorpay
-                const confirmData = await subscriptionApi.confirmSubscription();
+                const sid = searchParams.get("sid");
+                const confirmData = await subscriptionApi.confirmSubscription(sid);
 
                 if (confirmData.status === "active") {
                     setStatus("success");
