@@ -2,6 +2,7 @@ import React from "react"
 import ReactDOM from "react-dom/client"
 import { Provider } from "react-redux"
 import { RouterProvider } from "react-router-dom"
+import { Analytics } from "@vercel/analytics/react"
 import { store } from "./app/store"
 import { router } from "./routes/router"
 import { ThemeProvider } from "./context/ThemeContext"
@@ -14,6 +15,7 @@ ReactDOM.createRoot(
     <Provider store={store}>
       <ThemeProvider>
         <RouterProvider router={router} />
+        <Analytics />
       </ThemeProvider>
     </Provider>
   </React.StrictMode>
