@@ -1,6 +1,6 @@
 # LoopLearn — Frontend
 
-LoopLearn's web client — a React/TypeScript single-page app that consumes the ([LoopLearn Flask backend](https://github.com/pradnyeshbhalekar/looplearn-be))'s daily AI-generated engineering articles. It handles Google Sign-In, renders the day's article (Mermaid architecture diagrams, code artifacts, trade-off comparisons, flashcards, narrated audio playback), lets users subscribe to a domain (or a team workspace) via Razorpay, and provides an inline "select text to get an AI explanation" tutor and an admin review queue for pipeline-generated candidates.
+LoopLearn's web client — a React/TypeScript single-page app that consumes the [LoopLearn Flask backend](https://github.com/pradnyeshbhalekar/looplearn-be)'s daily AI-generated engineering articles. It handles Google Sign-In, renders the day's article (Mermaid architecture diagrams, code artifacts, trade-off comparisons, flashcards, narrated audio playback), lets users subscribe to a domain (or a team workspace) via Razorpay, and provides an inline "select text to get an AI explanation" tutor and an admin review queue for pipeline-generated candidates.
 
 ## Tech stack
 
@@ -51,17 +51,17 @@ src/
 
 ## Routes
 
-| Path | Page | Guard |
-|---|---|---|
-| `/` | `Home` — marketing/landing page | — |
-| `/pricing` | `Pricing` — plan list, subscribe (personal or team) | — |
-| `/subscription/success` | `SubscriptionSuccess` — polls `/api/subscriptions/confirm` after Razorpay checkout until the subscription is active | — |
-| `/login` | `Login` — Google Sign-In button | `LoginGuard` (redirects away if already authenticated) |
-| `/auth/callback` | `AuthCallback` — picks up a `?token=` from a server-side OAuth redirect, or falls back to redux state | — |
-| `/dashboard` | `Dashboard` — the user's subscriptions and workspaces, create/manage workspaces | `AuthGuard` |
-| `/todays` | `Todays` — today's free/public article | `AuthGuard` |
-| `/subscriptions/article/:slug` | `SubscribedArticle` — a specific article gated to the domain's subscribers | `AuthGuard` |
-| `/admin` | `Admin` — review pipeline candidates (approve/reject/schedule) | `AuthGuard` + `AdminRoute` |
+| Path                           | Page                                                                                                                | Guard                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `/`                            | `Home` — marketing/landing page                                                                                     | —                                                      |
+| `/pricing`                     | `Pricing` — plan list, subscribe (personal or team)                                                                 | —                                                      |
+| `/subscription/success`        | `SubscriptionSuccess` — polls `/api/subscriptions/confirm` after Razorpay checkout until the subscription is active | —                                                      |
+| `/login`                       | `Login` — Google Sign-In button                                                                                     | `LoginGuard` (redirects away if already authenticated) |
+| `/auth/callback`               | `AuthCallback` — picks up a `?token=` from a server-side OAuth redirect, or falls back to redux state               | —                                                      |
+| `/dashboard`                   | `Dashboard` — the user's subscriptions and workspaces, create/manage workspaces                                     | `AuthGuard`                                            |
+| `/todays`                      | `Todays` — today's free/public article                                                                              | `AuthGuard`                                            |
+| `/subscriptions/article/:slug` | `SubscribedArticle` — a specific article gated to the domain's subscribers                                          | `AuthGuard`                                            |
+| `/admin`                       | `Admin` — review pipeline candidates (approve/reject/schedule)                                                      | `AuthGuard` + `AdminRoute`                             |
 
 ## Key features
 
@@ -77,6 +77,7 @@ src/
 ### Article rendering
 
 Both `Todays` and `SubscribedArticle` render the same article shape returned by the backend, composed from:
+
 - `PracticalArtifact` — the code/config/CLI/SQL snippet with a line-by-line breakdown
 - `EngineeringInsights` — observability metrics and anti-patterns
 - `TradeoffComparison` — pros/cons per strategy
@@ -102,9 +103,9 @@ Both `Todays` and `SubscribedArticle` render the same article shape returned by 
 
 Create a `.env` (or `.env.local`) in the project root:
 
-| Variable | Description |
-|---|---|
-| `VITE_API_BASE_URL` | Base URL of the Flask backend, e.g. `http://127.0.0.1:5000` in dev |
+| Variable                | Description                                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------------------------------ |
+| `VITE_API_BASE_URL`     | Base URL of the Flask backend, e.g. `http://127.0.0.1:5000` in dev                                     |
 | `VITE_GOOGLE_CLIENT_ID` | Google OAuth client ID used to render the Sign-In button (must match the backend's `GOOGLE_CLIENT_ID`) |
 
 `.env.example` in this repo currently documents only `VITE_API_BASE_URL` — `VITE_GOOGLE_CLIENT_ID` is also required (see `src/pages/Login.tsx`).
