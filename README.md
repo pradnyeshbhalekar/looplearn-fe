@@ -1,6 +1,6 @@
 # LoopLearn — Frontend
 
-LoopLearn's web client — a React/TypeScript single-page app that consumes the [LoopLearn Flask backend](../../py/daily)'s daily AI-generated engineering articles. It handles Google Sign-In, renders the day's article (Mermaid architecture diagrams, code artifacts, trade-off comparisons, flashcards, narrated audio playback), lets users subscribe to a domain (or a team workspace) via Razorpay, and provides an inline "select text to get an AI explanation" tutor and an admin review queue for pipeline-generated candidates.
+LoopLearn's web client — a React/TypeScript single-page app that consumes the ([LoopLearn Flask backend](https://github.com/pradnyeshbhalekar/looplearn-be))'s daily AI-generated engineering articles. It handles Google Sign-In, renders the day's article (Mermaid architecture diagrams, code artifacts, trade-off comparisons, flashcards, narrated audio playback), lets users subscribe to a domain (or a team workspace) via Razorpay, and provides an inline "select text to get an AI explanation" tutor and an admin review queue for pipeline-generated candidates.
 
 ## Tech stack
 
